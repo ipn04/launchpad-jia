@@ -40,19 +40,19 @@ export default function CareersV2Table() {
     "Recent Activity": {
       key: null,
       direction: "ascending",
-    }, 
+    },
     "Oldest Activity": {
       key: "lastActivityAt",
       direction: "ascending",
-    }, 
+    },
     "Date Created (Newest First)": {
       key: "createdAt",
       direction: "descending",
-    }, 
+    },
     "Date Created (Oldest First)": {
       key: "createdAt",
       direction: "ascending",
-    }, 
+    },
     "Most Hired": {
       key: "hired",
       direction: "descending",
@@ -93,7 +93,7 @@ export default function CareersV2Table() {
   useEffect(() => {
     const fetchOrgDetails = async () => {
       try {
-        const orgDetails = await axios.post("/api/feth-org-details", {
+        const orgDetails = await axios.post("/api/fetch-org-details", {
           orgID: activeOrg._id,
         });
         setAvailableJobSlots((orgDetails.data?.plan?.jobLimit || 3) + (orgDetails.data?.extraJobSlots || 0));
@@ -155,15 +155,15 @@ export default function CareersV2Table() {
     </div>
 
     <div style={{ display: "flex", flexDirection: "row", gap: 8, alignItems: "center" }}>
-    <a 
+    <a
     href="/recruiter-dashboard/careers/new-career"
     data-tooltip-id="add-career-tooltip"
     data-tooltip-html={`You have reached the maximum number of jobs for your plan. Please upgrade your plan to add more jobs.`}
     >
     <button className="button-primary-v2"
     disabled={totalActiveCareers >= availableJobSlots}
-    style={{ 
-      opacity: totalActiveCareers >= availableJobSlots ? 0.5 : 1, 
+    style={{
+      opacity: totalActiveCareers >= availableJobSlots ? 0.5 : 1,
       cursor: totalActiveCareers >= availableJobSlots ? "not-allowed" : "pointer"
     }}
     >
@@ -207,7 +207,7 @@ export default function CareersV2Table() {
                 setSortBy(value);
                 setSortConfig({ key: sortByOptions[value].key, direction: sortByOptions[value].direction });
                 setCurrentPage(1);
-              }} options={Object.keys(sortByOptions)} icon="la-sort-amount-down" valuePrefix="Sort by:" />   
+              }} options={Object.keys(sortByOptions)} icon="la-sort-amount-down" valuePrefix="Sort by:" />
             </div>
           </div>
           {/* Light table */}
@@ -344,7 +344,7 @@ export default function CareersV2Table() {
                             <i className="la la-ellipsis-h" style={{ fontSize: 16, color: "#787486" }}></i>
                         </button>
                         {menuOpen && selectedCareer?._id === item._id && (
-                          <div 
+                          <div
                           className={`dropdown-menu dropdown-menu-right w-100 mt-1 org-dropdown-anim${
                               menuOpen ? " show" : ""
                               }`}
@@ -401,8 +401,8 @@ export default function CareersV2Table() {
             )}
             {/* Pagination */}
             <div className="d-flex justify-content-between align-items-center border-top" style={{ padding: "15px 20px" }}>
-              <button 
-              className={`btn btn-primary shadow-none ${currentPage === 1 ? "invisible" : ""}`} 
+              <button
+              className={`btn btn-primary shadow-none ${currentPage === 1 ? "invisible" : ""}`}
               style={{ backgroundColor: "white", color: "black", border: "1px solid lightgray" }}
               onClick={() => {
                 if (currentPage > 1) {
@@ -414,9 +414,9 @@ export default function CareersV2Table() {
 
               <div>
                 {Array.from({ length: totalPages }, (_, index) => (
-                  <button 
-                  key={index} 
-                  className={`btn shadow-none ${currentPage === index + 1 ? "btn-primary" : ""}`} 
+                  <button
+                  key={index}
+                  className={`btn shadow-none ${currentPage === index + 1 ? "btn-primary" : ""}`}
                   style={{ backgroundColor: currentPage === index + 1 ? "#F8F8F8": "white", color: "black", border: "none", fontSize: "14px", fontWeight: 550, borderRadius: "60px" }}
                   onClick={() => {
                     setCurrentPage(index + 1);
@@ -426,9 +426,9 @@ export default function CareersV2Table() {
                   </button>
                 ))}
               </div>
-              
-              <button 
-              className={`btn btn-primary shadow-none ${currentPage >= totalPages ? "invisible" : ""}`} 
+
+              <button
+              className={`btn btn-primary shadow-none ${currentPage >= totalPages ? "invisible" : ""}`}
               style={{ backgroundColor: "white", color: "black", border: "1px solid lightgray", fontSize: "14px", fontWeight: 550, borderRadius: "60px" }}
               onClick={() => {
                 if (currentPage < totalPages) {

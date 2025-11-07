@@ -2,14 +2,20 @@
 
 import React, { useRef, useEffect } from "react";
 
-export default function RichTextEditor({setText, text}) {
+interface RichTextEditorProps {
+  setText: (value: string) => void;
+  text: string;
+  error?: boolean;
+}
+
+export default function RichTextEditor({setText, text, error}: RichTextEditorProps) {
     const descriptionEditorRef = useRef(null);
 
     const formatText = (command, value = null) => {
         document.execCommand(command, false, value);
         descriptionEditorRef.current?.focus();
       };
-  
+
       const handleDescriptionChange = () => {
         if (descriptionEditorRef.current) {
           setText(descriptionEditorRef.current.innerHTML);
@@ -18,17 +24,17 @@ export default function RichTextEditor({setText, text}) {
 
       const handlePaste = (e) => {
         e.preventDefault();
-        
+
         // Get plain text from clipboard
         const text = e.clipboardData.getData('text/plain');
-        
+
         // Insert the plain text at cursor position
         document.execCommand('insertText', false, text);
-        
+
         // Update the state
         handleDescriptionChange();
       };
-  
+
       // Handle placeholder for contenteditable div
       useEffect(() => {
         const editor = descriptionEditorRef.current;
@@ -38,24 +44,24 @@ export default function RichTextEditor({setText, text}) {
               editor.innerHTML = '';
             }
           };
-          
+
           const handleBlur = () => {
             if (editor.innerHTML === '' || editor.innerHTML === '<br>') {
               editor.innerHTML = '';
             }
           };
-  
+
           editor.addEventListener('focus', handleFocus);
           editor.addEventListener('blur', handleBlur);
-          
+
           return () => {
             editor.removeEventListener('focus', handleFocus);
             editor.removeEventListener('blur', handleBlur);
           };
         }
       }, []);
-  
-  
+
+
       useEffect(() => {
         if (descriptionEditorRef.current && !descriptionEditorRef.current.innerHTML && text) {
           descriptionEditorRef.current.innerHTML = text;
@@ -67,7 +73,7 @@ export default function RichTextEditor({setText, text}) {
         <div
           ref={descriptionEditorRef}
           contentEditable={true}
-          className="form-control"
+          className={`form-control ${error ? "border-danger" : ""}`}
           style={{
             height: "300px",
             overflowY: "auto",
@@ -83,7 +89,7 @@ export default function RichTextEditor({setText, text}) {
           data-placeholder="Enter description"
         ></div>
         {/* Rich Text Editor Toolbar */}
-        <div style={{ 
+        <div style={{
           border: "1px solid #E9EAEB",
           borderRadius: "0 0 4px 4px",
           backgroundColor: "#FFFFFF",
@@ -129,7 +135,7 @@ export default function RichTextEditor({setText, text}) {
           >
             <i className="la la-strikethrough"></i>
           </button>
-          
+
           <div style={{ width: "1px", backgroundColor: "#D5D7DA", margin: "0 4px" }}></div>
           <button
             type="button"
@@ -149,7 +155,7 @@ export default function RichTextEditor({setText, text}) {
           >
             <i className="la la-list-ul"></i>
           </button>
-          
+
         </div>
         <style jsx>{`
           [data-placeholder]:empty:before {

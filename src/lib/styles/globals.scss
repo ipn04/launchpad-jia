@@ -209,7 +209,7 @@ td {
 }
 
 .form-control {
-  border: 2px solid #9c99a4 !important;
+  // border: 2px solid #9c99a4 !important;
   border-radius: 5px !important;
   color: #333 !important;
   font-size: 1rem !important;
@@ -2078,13 +2078,6 @@ $gifURL: "/gr-1.gif";
 .layered-card-outer {
   margin-top: 16px;
   width: 100%;
-  background: linear-gradient(
-    90deg,
-    #9fcaed 0%,
-    #ceb6da 33%,
-    #ebacc9 66%,
-    #fccec0 100%
-  );
   border-radius: 20px;
   padding-top: 10px;
 }
