@@ -11,6 +11,10 @@ import FullScreenLoadingAnimation from "./FullScreenLoadingAnimation";
 import TipCard from "@/lib/components/TipCard/TipCard";
 import CareerDetails from "@/lib/components/formSteps/CareerDetails/CareerDetails";
 import PreScreening from "@/lib/components/formSteps/ReviewPreScreening/PreScreening";
+import ProgressTracker from "./ProgressTracker";
+import Interview from "../formSteps/Interview/Interview";
+import CustomDropdown from "./CustomDropdown";
+import Accordion from "./Accordion";
 
   // Setting List icons
   const screeningSettingList = [
@@ -71,6 +75,17 @@ export const screeningTips = [
   {
     header: "Add Pre-Screening questions",
     body: "to collect key details such as notice period, work setup, or salary expectations to guide your review and candidate discussions."
+  },
+];
+
+export const interviewTips = [
+  {
+    header: "Add a Secret Prompt",
+    body: "to fine-tune how Jia scores and evaluates submitted CVs."
+  },
+  {
+    header: "Use “Generate Questions”",
+    body: "to quickly create tailored interview questions, then refine or mix them with your own for balanced results."
   },
 ];
 
@@ -137,15 +152,24 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
         maximumSalary: false,
         description: false,
         salaryRange: false,
+        questions: false,
     });
-    const [currentStep, setCurrentStep] = useState<number>(() => {
-    const savedDraft = sessionStorage.getItem("careerDraft");
+    const [preScreeningQuestions, setPreScreeningQuestions] = useState<any[]>(
+        career?.preScreeningQuestions || []
+    );
+
+    const [currentStep, setCurrentStep] = useState<number>(1);
+
+    useEffect(() => {
+    if (typeof window !== "undefined") {
+        const savedDraft = sessionStorage.getItem("careerDraft");
         if (savedDraft) {
-            const draft = JSON.parse(savedDraft);
-            return draft.currentStep ?? 1;
+        const draft = JSON.parse(savedDraft);
+        setCurrentStep(draft.currentStep ?? 1);
         }
-        return 1;
-    });
+    }
+    }, []);
+
     console.log("currentStep:", currentStep);
     const isFormValid = () => {
         // return jobTitle?.trim().length > 0 && description?.trim().length > 0 && questions.some((q) => q.questions.length > 0) && workSetup?.trim().length > 0;
@@ -215,31 +239,38 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
         setShowSaveModal(status);
     }
 
-    const validateBasicInfo = () => {
-        const newErrors = {
-            jobTitle: !jobTitle?.trim(),
-            employmentType: !employmentType?.trim(),
-            arrangement: !workSetup?.trim(),
-            country: !country?.trim(),
-            province: !province?.trim(),
-            city: !city?.trim(),
-            minimumSalary: !String(minimumSalary || "").trim(),
-            maximumSalary: !String(maximumSalary || "").trim(),
-            description: !description?.trim(),
-            salaryRange: false,
+    const validateStep = (step: number) => {
+        const newErrors = { ...errors };
+
+        if (step === 1) {
+            newErrors.jobTitle = !jobTitle?.trim();
+            newErrors.employmentType = !employmentType?.trim();
+            newErrors.arrangement = !workSetup?.trim();
+            newErrors.country = !country?.trim();
+            newErrors.province = !province?.trim();
+            newErrors.city = !city?.trim();
+            newErrors.minimumSalary = !salaryNegotiable && !String(minimumSalary || "").trim();
+            newErrors.maximumSalary = !salaryNegotiable && !String(maximumSalary || "").trim();
+            newErrors.description = !description?.trim();
+            newErrors.salaryRange =
+                !salaryNegotiable &&
+                minimumSalary &&
+                maximumSalary &&
+                Number(minimumSalary) > Number(maximumSalary);
         }
 
-         if (
-            minimumSalary &&
-            maximumSalary &&
-            Number(minimumSalary) > Number(maximumSalary)
-        ) {
-            newErrors.salaryRange = true;
+        if (step === 3) {
+            const totalQuestions = questions.reduce((acc, q) => acc + (q.questions?.length || 0), 0);
+            newErrors.questions = totalQuestions < 5;
         }
 
         setErrors(newErrors);
-        return !Object.values(newErrors).some((e) => e === true);
-    }
+
+        // Return true if no errors for this step
+        return !Object.entries(newErrors)
+            .filter(([key]) => (step === 1 ? key !== "questions" : key === "questions"))
+            .some(([_, value]) => value === true);
+    };
 
     const saveCareer = async (status: string) => {
         setShowSaveModal("");
@@ -261,6 +292,7 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
             workSetup,
             workSetupRemarks,
             questions,
+            preScreeningQuestions,
             lastEditedBy: userInfoSlice,
             createdBy: userInfoSlice,
             screeningSetting,
@@ -276,7 +308,7 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
             status,
             employmentType,
         }
-
+        console.log("Saving career:", career);
         try {
 
             const response = await axios.post("/api/add-career", career);
@@ -309,6 +341,7 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
             setWorkSetup(draft.workSetup || "");
             setWorkSetupRemarks(draft.workSetupRemarks || "");
             setQuestions(draft.questions || []);
+            setPreScreeningQuestions(draft.preScreeningQuestions || []);
             setScreeningSetting(draft.screeningSetting || "Good Fit and above");
             setRequireVideo(draft.requireVideo ?? true);
             setSalaryNegotiable(draft.salaryNegotiable ?? true);
@@ -332,6 +365,7 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
             workSetup,
             workSetupRemarks,
             questions,
+            preScreeningQuestions,
             lastEditedBy: { image: user.image, name: user.name, email: user.email },
             createdBy: { image: user.image, name: user.name, email: user.email },
             screeningSetting,
@@ -346,11 +380,8 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
             employmentType,
             currentStep: nextStep,
         };
-
         try {
             sessionStorage.setItem("careerDraft", JSON.stringify(careerDraft));
-            console.log("Draft saved to sessionStorage:", careerDraft);
-
             setCurrentStep(step + 1);
         } catch (error) {
             errorToast("Failed to save draft", 1300);
@@ -377,37 +408,61 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
 
     return (
         <div className="col">
-        {formType === "add" ? (<div style={{ marginBottom: "35px", display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-                <h1 style={{ fontSize: "24px", fontWeight: 550, color: "#111827" }}>Add new career</h1>
-                <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "10px" }}>
-                  <button
-                    disabled={!isFormValid() || isSavingCareer}
-                    style={{ width: "fit-content", color: "#414651", background: "#fff", border: "1px solid #D5D7DA", padding: "8px 16px", borderRadius: "60px", cursor: !isFormValid() || isSavingCareer ? "not-allowed" : "pointer", whiteSpace: "nowrap" }} onClick={() => {
-                        confirmSaveCareer("inactive");
-                    }}>
-                    Save as Unpublished
-                  </button>
-                  {/* <button
-                    disabled={isSavingCareer}
-                    style={{ width: "fit-content", background: isSavingCareer ? "#D5D7DA" : "black", color: "#fff", border: "1px solid #E9EAEB", padding: "8px 16px", borderRadius: "60px", cursor: !isFormValid() || isSavingCareer ? "not-allowed" : "pointer", whiteSpace: "nowrap"}} onClick={() => {
-                        confirmSaveCareer("active");
-                    }}>
-                    <i className="la la-check-circle" style={{ color: "#fff", fontSize: 20, marginRight: 8 }}></i>
-                    Save & Continue
-                  </button> */}
-                   <button
-                    disabled={isSavingCareer}
-                    style={{ width: "fit-content", background: isSavingCareer ? "#D5D7DA" : "black", color: "#fff", border: "1px solid #E9EAEB", padding: "8px 16px", borderRadius: "60px", cursor: "pointer", whiteSpace: "nowrap"}}
-                        onClick={async () => {
-                            if (!validateBasicInfo()) return;
-                            await saveDraft(currentStep);
+        {formType === "add" ? (
+            <div>
+                <div style={{ marginBottom: "35px", display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+                    <h1 style={{ fontSize: "24px", fontWeight: 550, color: "#111827" }}>Add new career</h1>
+                    <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "10px" }}>
+                    <button
+                        disabled={!isFormValid() || isSavingCareer}
+                        style={{ width: "fit-content", color: "#414651", background: "#fff", border: "1px solid #D5D7DA", padding: "8px 16px", borderRadius: "60px", cursor: !isFormValid() || isSavingCareer ? "not-allowed" : "pointer", whiteSpace: "nowrap" }} onClick={() => {
+                            confirmSaveCareer("inactive");
+                        }}>
+                        Save as Unpublished
+                    </button>
+                    {/* <button
+                        disabled={isSavingCareer}
+                        style={{ width: "fit-content", background: isSavingCareer ? "#D5D7DA" : "black", color: "#fff", border: "1px solid #E9EAEB", padding: "8px 16px", borderRadius: "60px", cursor: !isFormValid() || isSavingCareer ? "not-allowed" : "pointer", whiteSpace: "nowrap"}} onClick={() => {
+                            confirmSaveCareer("active");
+                        }}>
+                        <i className="la la-check-circle" style={{ color: "#fff", fontSize: 20, marginRight: 8 }}></i>
+                        Save & Continue
+                    </button> */}
+                    <button
+                        disabled={isSavingCareer}
+                        style={{
+                            width: "fit-content",
+                            background: isSavingCareer ? "#D5D7DA" : "black",
+                            color: "#fff",
+                            border: "1px solid #E9EAEB",
+                            padding: "8px 16px",
+                            borderRadius: "60px",
+                            cursor: "pointer",
+                            whiteSpace: "nowrap",
                         }}
-                    >
-                    <i className="la la-check-circle" style={{ color: "#fff", fontSize: 20, marginRight: 8 }}></i>
-                    Save & Continue
-                  </button>
+                        onClick={async () => {
+                            if (!validateStep(currentStep)) return;
+
+                            if (currentStep === 4) {
+                                confirmSaveCareer("active");
+                            } else {
+                                await saveDraft(currentStep);
+                            }
+                        }}
+                        >
+                        <i
+                            className="la la-check-circle"
+                            style={{ color: "#fff", fontSize: 20, marginRight: 8 }}
+                        ></i>
+                        {currentStep === 4 ? "Publish" : "Save & Continue"}
+                        </button>
+                    </div>
                 </div>
-        </div>) : (
+                <div>
+                    <ProgressTracker currentStep={currentStep} />
+                </div>
+            </div>
+            ) : (
             <div style={{ marginBottom: "35px", display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
             <h1 style={{ fontSize: "24px", fontWeight: 550, color: "#111827" }}>Edit Career Details</h1>
             <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "10px" }}>
@@ -436,7 +491,14 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
        </div>
         )}
         <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", width: "100%", gap: 16, alignItems: "flex-start", marginTop: 16 }}>
-        <div style={{ width: "60%", display: "flex", flexDirection: "column", gap: 8 }}>
+        <div
+            style={{
+                width: currentStep === 4 ? "100%" : "60%",
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+            }}
+        >
           <div className="layered-card-outer">
             {currentStep === 1 && (
                 <CareerDetails
@@ -481,14 +543,290 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
                     screeningSettingList={screeningSettingList}
                     screeningSetting={screeningSetting}
                     setScreeningSetting={setScreeningSetting}
+                    preScreeningQuestions={preScreeningQuestions}
+                    setPreScreeningQuestions={setPreScreeningQuestions}
                 />
+            )}
+
+            {currentStep === 3 && (
+                <div>
+                    <Interview
+                        screeningSettingList={screeningSettingList}
+                        screeningSetting={screeningSetting}
+                        setScreeningSetting={setScreeningSetting}
+                    />
+                    <div className="layered-card-content">
+                        <div style={{ display: "flex", flexDirection: "row", gap: 8 }}>
+                            <i className="la la-id-badge" style={{ color: "#414651", fontSize: 20 }}></i>
+                            <span>Screening Setting</span>
+                        </div>
+                        <CustomDropdown
+                        onSelectSetting={(setting) => {
+                            setScreeningSetting(setting);
+                        }}
+                        screeningSetting={screeningSetting}
+                        settingList={screeningSettingList}
+                        />
+                        <span>This settings allows Jia to automatically endorse candidates who meet the chosen criteria.</span>
+                        <div style={{ display: "flex", flexDirection: "row",justifyContent: "space-between", gap: 8 }}>
+                            <div style={{ display: "flex", flexDirection: "row", gap: 8 }}>
+                                <i className="la la-video" style={{ color: "#414651", fontSize: 20 }}></i>
+                                <span>Require Video Interview</span>
+                            </div>
+                            <div style={{ display: "flex", flexDirection: "row", alignItems: "flex-start", gap: 8 }}>
+                                <label className="switch">
+                                    <input type="checkbox" checked={requireVideo} onChange={() => setRequireVideo(!requireVideo)} />
+                                    <span className="slider round"></span>
+                                </label>
+                                <span>{requireVideo ? "Yes" : "No"}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <InterviewQuestionGeneratorV2 questions={questions} setQuestions={(questions) => setQuestions(questions)} jobTitle={jobTitle} description={description} error={errors.questions} />
+                </div>
+            )}
+
+            {currentStep === 4 && (
+                <>
+                <Accordion
+                    title="Career Details & Team Access"
+                    onEdit={() => alert('Edit Career Details')}
+                >
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8, backgroundColor: "#FFFFFF", padding: 16, borderRadius: 20 }}>
+                        <div className="p-2">
+                            <div className="d-flex flex-column pb-3"  style={{borderBottom: "1px solid #E9EAEB"}}>
+                                <span style={{fontWeight: 700, fontSize: 14, paddingBottom: 4}}>
+                                    Job Title
+                                </span>
+                                <span style={{fontWeight: 500, fontSize: 14, paddingBottom: 4}}>
+                                    {jobTitle}
+                                </span>
+                            </div>
+                            <div className="row mr-0 ml-0 py-3"  style={{borderBottom: "1px solid #E9EAEB"}}>
+                                <div className="d-flex flex-column col-sm px-0">
+                                    <span style={{fontWeight: 700, fontSize: 14, paddingBottom: 4}}>
+                                        Employment Type
+                                    </span>
+                                    <span style={{fontWeight: 500, fontSize: 14, paddingBottom: 4}}>
+                                        {employmentType}
+                                    </span>
+                                </div>
+                                <div className="d-flex flex-column col-sm px-0">
+                                    <span style={{fontWeight: 700, fontSize: 14, paddingBottom: 4}}>
+                                        Work Arrangement
+                                    </span>
+                                    <span style={{fontWeight: 500, fontSize: 14, paddingBottom: 4}}>
+                                        {workSetup}
+                                    </span>
+                                </div>
+                                <div className="d-flex flex-column col-sm px-0"/>
+                            </div>
+                            <div className="row mr-0 ml-0 py-3"  style={{borderBottom: "1px solid #E9EAEB"}}>
+                                <div className="d-flex flex-column col-sm px-0">
+                                    <span style={{fontWeight: 700, fontSize: 14, paddingBottom: 4}}>
+                                        Country
+                                    </span>
+                                    <span style={{fontWeight: 500, fontSize: 14, paddingBottom: 4}}>
+                                        {country}
+                                    </span>
+                                </div>
+                                <div className="d-flex flex-column col-sm px-0">
+                                    <span style={{fontWeight: 700, fontSize: 14, paddingBottom: 4}}>
+                                        Province
+                                    </span>
+                                    <span style={{fontWeight: 500, fontSize: 14, paddingBottom: 4}}>
+                                        {province}
+                                    </span>
+                                </div>
+                                <div className="d-flex flex-column col-sm px-0">
+                                    <span style={{fontWeight: 700, fontSize: 14, paddingBottom: 4}}>
+                                        City
+                                    </span>
+                                    <span style={{fontWeight: 500, fontSize: 14, paddingBottom: 4}}>
+                                        {city}
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="row mr-0 ml-0 py-3"  style={{borderBottom: "1px solid #E9EAEB"}}>
+                                <div className="d-flex flex-column col-sm px-0">
+                                    <span style={{fontWeight: 700, fontSize: 14, paddingBottom: 4}}>
+                                        Minimum Salary
+                                    </span>
+                                    <span style={{fontWeight: 500, fontSize: 14, paddingBottom: 4}}>
+                                        {minimumSalary}
+                                    </span>
+                                </div>
+                                <div className="d-flex flex-column col-sm px-0">
+                                    <span style={{fontWeight: 700, fontSize: 14, paddingBottom: 4}}>
+                                        Maximum Salary
+                                    </span>
+                                    <span style={{fontWeight: 500, fontSize: 14, paddingBottom: 4}}>
+                                        {maximumSalary}
+                                    </span>
+                                </div>
+                                <div className="d-flex flex-column col-sm px-0"/>
+                            </div>
+                        </div>
+                        <div className="px-2">
+                            <span style={{fontWeight: 700, fontSize: 14, paddingBottom: 4}}>
+                                Job Description
+                            </span>
+                            <p className="my-2" style={{fontWeight: 700, fontSize: 14}}>
+                                {description}
+                            </p>
+                        </div>
+                    </div>
+                </Accordion>
+
+                <Accordion
+                    title="CV Review & Pre-Screening Questions"
+                    onEdit={() => alert('Edit CV Review')}
+                >
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8, backgroundColor: "#FFFFFF", padding: 16, borderRadius: 20 }}>
+                        <div className="p-2" >
+                            <div className="d-flex flex-column">
+                                <span style={{fontWeight: 700, fontSize: 14, paddingBottom: 6}}>
+                                    CV Screening
+                                </span>
+                                <span style={{fontWeight: 500, fontSize: 16, paddingBottom: 6}}>
+                                    Automatically endorse candidates who are Good Fit and above
+                                </span>
+                                <span style={{fontWeight: 700, fontSize: 14, paddingBottom: 6}}>
+                                    Pre-Screening Questions {preScreeningQuestions && preScreeningQuestions.length > 0 ? `(${preScreeningQuestions.length})` : ""}
+                                </span>
+                            </div>
+                            {preScreeningQuestions && preScreeningQuestions.length > 0 ? (
+                                <ul className="space-y-2 list-unstyled">
+                                    {preScreeningQuestions.map((q, index) => (
+                                    <li
+                                        key={index}
+                                        className="py-1 flex flex-col gap-1"
+                                    >
+                                        <span className="font-semibold text-gray-800" style={{fontSize: 16, fontWeight: 500}}>
+                                            {index + 1}. {q.question || "Untitled question"}
+                                        </span>
+                                        {q.type === "dropdown" && q.options && q.options.length > 0 ? (
+                                            <div className="ml-4">
+                                                <ul className="list-disc pl-3 text-gray-700 text-sm"
+                                                     style={{
+                                                        fontSize: 15,
+                                                        fontWeight: 500,
+                                                        listStyleType: "disc",
+                                                        listStylePosition: "outside"
+                                                    }}
+                                                >
+                                                    {q.options.map((option: string, idx: number) => (
+                                                        <li className="py-1" key={idx}>{option}</li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                            ) : (
+                                            <p className="ml-4 text-gray-400 text-sm italic">
+                                                No options added.
+                                            </p>
+                                        )}
+                                    </li>
+                                    ))}
+                                </ul>
+                                ) : (
+                                <p className="text-gray-500 text-sm italic">
+                                    No pre-screening questions added yet.
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                </Accordion>
+                <Accordion
+                    title="AI Interview Setup"
+                    onEdit={() => alert('AI Interview Setup')}
+                >
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8, backgroundColor: "#FFFFFF", padding: 16, borderRadius: 20 }}>
+                        <div className="p-2" >
+                             <div className="d-flex flex-column">
+                                <span style={{fontWeight: 700, fontSize: 14, paddingBottom: 6}}>
+                                    AI Interview Screening
+                                </span>
+                                <span style={{fontWeight: 500, fontSize: 16, paddingBottom: 6}}>
+                                    Automatically endorse candidates who are Good Fit and above
+                                </span>
+                            </div>
+                            <div className="d-flex justify-content-between align-items-center py-3 my-3" style={{borderBottom: "1px solid #E9EAEB", borderTop: "1px solid #E9EAEB"}}>
+                                <span style={{fontWeight: 700, fontSize: 14}}>
+                                    Require Video on Interview
+                                </span>
+                                <span style={{fontWeight: 500, fontSize: 16}}>
+                                    {requireVideo ? "Yes" : "No"}
+                                </span>
+                            </div>
+                            <span style={{fontWeight: 700, fontSize: 14, paddingBottom: 6}}>
+                                AI Interview Screening {questions && questions.length > 0 ? `(${questions.reduce((acc, q) => acc + (q.questions?.length || 0), 0)})` : ""}
+                            </span>
+                            {questions && questions.length > 0 ? (
+                                questions.map((category) => (
+                                <div
+                                    key={category.id}
+                                    style={{
+                                        borderRadius: 12,
+                                        margin: "8px 0",
+                                    }}
+                                >
+                                    <h4
+                                        style={{
+                                            fontSize: 14,
+                                            fontWeight: 700,
+                                            marginBottom: 8,
+                                        }}
+                                    >
+                                        {category.category}
+                                    </h4>
+
+                                    {category.questions && category.questions.length > 0 ? (
+                                    <ol style={{ paddingLeft: 16, margin: 0 }}>
+                                        {category.questions.map((q, i) => (
+                                        <li
+                                            key={q.id || i}
+                                            style={{
+                                            fontSize: 16,
+                                            color: "#414651",
+                                            marginBottom: 4,
+                                            fontWeight: 500,
+                                            marginLeft: 18,
+                                            }}
+                                        >
+                                            {q.question}
+                                        </li>
+                                        ))}
+                                    </ol>
+                                    ) : (
+                                    <p style={{ fontSize: 14, fontWeight: 500, color: "#9E9E9E" }}>
+                                        No questions added for this category.
+                                    </p>
+                                    )}
+                                </div>
+                                ))
+                            ) : (
+                                <p style={{ fontSize: 16, fontWeight: 500, color: "#9E9E9E" }}>
+                                    No interview questions available.
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                </Accordion>
+                </>
             )}
           </div>
           {/* <InterviewQuestionGeneratorV2 questions={questions} setQuestions={(questions) => setQuestions(questions)} jobTitle={jobTitle} description={description} /> */}
         </div>
-        <div style={{ width: "40%", display: "flex", flexDirection: "column", gap: 8 }}>
-            <TipCard CareerDetails={jobTitleTips} ScreeningDetails={screeningTips} step={currentStep} />
-        </div>
+        {currentStep <= 3 && (
+            <div style={{ width: "40%", display: "flex", flexDirection: "column", gap: 8 }}>
+                <TipCard
+                    CareerDetails={jobTitleTips}
+                    ScreeningDetails={screeningTips}
+                    interviewTips={interviewTips}
+                    step={currentStep}
+                />
+            </div>
+        )}
         </div>
         {showSaveModal && (
             <CareerActionModal action={showSaveModal} onAction={(action) => saveCareer(action)} />

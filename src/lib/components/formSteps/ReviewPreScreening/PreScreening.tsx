@@ -5,14 +5,17 @@ interface PreScreeningProps {
     screeningSettingList: { name: string }[];
     screeningSetting: string;
     setScreeningSetting: (value: string) => void;
+    preScreeningQuestions: any[];
+    setPreScreeningQuestions: (value: any[]) => void;
 }
 
 function PreScreening({
     screeningSettingList,
     screeningSetting,
     setScreeningSetting,
+    preScreeningQuestions,
+    setPreScreeningQuestions,
 }: PreScreeningProps) {
-  const [preScreeningQuestions, setPreScreeningQuestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(true);
 
   const suggestedQuestions = [
@@ -26,7 +29,7 @@ function PreScreening({
     {
       id: 'work-setup',
       title: 'Work Setup',
-      question: 'How often are you willing to report to the office each week?',
+      question: 'How often are you willing to report to the office?',
       type: 'dropdown',
       options: ['At least 1-2x a week', 'At least 3-4x a week', 'Open to fully onsite work', 'Only open to fully remote work']
     },
@@ -126,13 +129,15 @@ function PreScreening({
             <div className="layered-card-content">
                 <span style={{fontSize: 16, color: "#181D27", fontWeight: 700}}>CV Screening</span>
                 <span>Jia automatically endorses candidates who meet the chosen criteria.</span>
-                <CustomDropdown
-                    onSelectSetting={(setting) => {
-                        setScreeningSetting(setting);
-                    }}
-                    screeningSetting={screeningSetting}
-                    settingList={screeningSettingList}
-                />
+                <div className='w-50'>
+                    <CustomDropdown
+                        onSelectSetting={(setting) => {
+                            setScreeningSetting(setting);
+                        }}
+                        screeningSetting={screeningSetting}
+                        settingList={screeningSettingList}
+                    />
+                </div>
             </div>
         </div>
 
@@ -187,7 +192,7 @@ function PreScreening({
                 ) : (
                     <div style={{ marginTop: '1rem', marginBottom: '1rem' }}>
                         {preScreeningQuestions.map((q, index) => (
-                            <div key={q.id} style={{
+                            <div className='mb-4' key={q.id} style={{
                                 border: '1px solid #E5E7EB',
                                 borderRadius: '8px',
                             }}>
@@ -304,38 +309,37 @@ function PreScreening({
                                         )}
 
                                         {q.type === 'range' && (
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #D1D5DB', padding: '4px 8px', borderRadius: 8 }}>
                                                     <span style={{ fontSize: 14, color: '#4B5563' }}>{q.currency}</span>
                                                     <input
                                                         type="number"
                                                         value={q.min}
                                                         onChange={(e) => updateQuestion(q.id, 'min', parseInt(e.target.value))}
                                                         style={{
-                                                            width: 96,
                                                             fontSize: 14,
                                                             padding: '4px 8px',
-                                                            border: '1px solid #D1D5DB',
+                                                            border: 'none',
                                                             borderRadius: '4px'
                                                         }}
                                                     />
+                                                    PHP
                                                     <i className="la la-angle-down" style={{ fontSize: 16, color: '#9CA3AF' }}></i>
                                                 </div>
-                                                <span style={{ color: '#9CA3AF' }}>-</span>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #D1D5DB', padding: '4px 8px', borderRadius: 8 }}>
                                                     <span style={{ fontSize: 14, color: '#4B5563' }}>{q.currency}</span>
                                                     <input
                                                         type="number"
                                                         value={q.max}
                                                         onChange={(e) => updateQuestion(q.id, 'max', parseInt(e.target.value))}
                                                         style={{
-                                                            width: 96,
                                                             fontSize: 14,
                                                             padding: '4px 8px',
-                                                            border: '1px solid #D1D5DB',
+                                                            border: 'none',
                                                             borderRadius: '4px'
                                                         }}
                                                     />
+                                                    PHP
                                                     <i className="la la-angle-down" style={{ fontSize: 16, color: '#9CA3AF' }}></i>
                                                 </div>
                                             </div>
@@ -403,13 +407,14 @@ function PreScreening({
                                     <button
                                         onClick={() => !isAdded && addSuggestedQuestion(suggested)}
                                         style={{
-                                        padding: '4px 12px',
+                                        padding: '4px 10px',
                                         fontSize: 14,
                                         border: '1px solid #D1D5DB',
-                                        borderRadius: '4px',
+                                        borderRadius: '26px',
                                         backgroundColor: isAdded ? '#E5E7EB' : 'white',
                                         cursor: isAdded ? 'not-allowed' : 'pointer',
-                                        color: isAdded ? '#6B7280' : 'black'
+                                        color: isAdded ? '#6B7280' : 'black',
+                                        fontWeight: 500
                                         }}
                                         disabled={isAdded}
                                         onMouseOver={(e) => {

@@ -24,8 +24,9 @@ export async function POST(request: Request) {
       country,
       province,
       employmentType,
+      preScreeningQuestions,
     } = await request.json();
-    // Validate required fields
+
     if (!jobTitle || !description || !questions || !location || !workSetup) {
       return NextResponse.json(
         {
@@ -38,44 +39,10 @@ export async function POST(request: Request) {
 
     const { db } = await connectMongoDB();
 
-    const orgDetails = await db.collection("organizations").aggregate([
-      {
-        $match: {
-          _id: new ObjectId(orgID)
-        }
-      },
-      {
-        $lookup: {
-            from: "organization-plans",
-            let: { planId: "$planId" },
-            pipeline: [
-                {
-                    $addFields: {
-                        _id: { $toString: "$_id" }
-                    }
-                },
-                {
-                    $match: {
-                        $expr: { $eq: ["$_id", "$$planId"] }
-                    }
-                }
-            ],
-            as: "plan"
-        }
-      },
-      {
-        $unwind: "$plan"
-      },
-    ]).toArray();
-
-    if (!orgDetails || orgDetails.length === 0) {
+    const org = await db.collection("organizations").findOne({ _id: new ObjectId(orgID) });
+    if (!org) {
+      console.log("Organization not found for orgID:", orgID);
       return NextResponse.json({ error: "Organization not found" }, { status: 404 });
-    }
-
-    const totalActiveCareers = await db.collection("careers").countDocuments({ orgID, status: "active" });
-
-    if (totalActiveCareers >= (orgDetails[0].plan.jobLimit + (orgDetails[0].extraJobSlots || 0))) {
-      return NextResponse.json({ error: "You have reached the maximum number of jobs for your plan" }, { status: 400 });
     }
 
     const career = {
@@ -101,6 +68,7 @@ export async function POST(request: Request) {
       country,
       province,
       employmentType,
+      preScreeningQuestions,
     };
 
     await db.collection("careers").insertOne(career);

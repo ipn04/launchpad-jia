@@ -11,7 +11,7 @@ import InterviewQuestionModal from "./InterviewQuestionModal";
 import FullScreenLoadingAnimation from "./FullScreenLoadingAnimation";
 
 export default function (props) {
-  const { questions, setQuestions, jobTitle, description } = props;
+  const { questions, setQuestions, jobTitle, description, error } = props;
   const [questionGenPrompt, setQuestionGenPrompt] = useState("");
   const questionCount = 5;
   const [showQuestionModal, setShowQuestionModal] = useState("");
@@ -86,24 +86,24 @@ export default function (props) {
       }
 
       setIsGeneratingQuestions(true);
-      
+
       const interviewCategories = Object.keys(interviewQuestionCategoryMap);
       const response = await axios.post("/api/llm-engine", {
       systemPrompt:
         "You are a helpful assistant that can answer questions and help with tasks.",
-      prompt: `Generate ${questionCount * interviewCategories.length} interview questions for the following Job opening: 
+      prompt: `Generate ${questionCount * interviewCategories.length} interview questions for the following Job opening:
         Job Title:
-        ${jobTitle} 
+        ${jobTitle}
         Job Description:
         ${description}
-  
+
         ${interviewCategories.map((category) => {
           return `Category:
           ${category}
           Category Description:
           ${interviewQuestionCategoryMap[category].description}`
         }).join("\n")}
-  
+
         ${interviewCategories.map((category) => `${questionCount} questions for ${category}`).join(", ")}
 
         ${
@@ -121,7 +121,7 @@ export default function (props) {
                 .join("\n")}`
             : ""
         }
-        
+
         return it in json format following this for each element {category: "category", questions: ["question1", "question2", "question3", "question4", "question5"]}
         return only the json array, nothing else, now markdown format just pure json code.
         `,
@@ -141,7 +141,7 @@ export default function (props) {
       const categoryIndex = newArray.findIndex(
         (q) => q.category === questionGroup.category
       );
-  
+
       if (categoryIndex !== -1) {
         const newQuestions = questionGroup.questions.map((q) => ({
           id: guid(),
@@ -160,8 +160,8 @@ export default function (props) {
     candidateActionToast(
       <span style={{ fontSize: 14, fontWeight: 700, color: "#181D27", marginLeft: 8 }}>
         Questions generated successfully
-      </span>, 
-      1500, 
+      </span>,
+      1500,
       <i className="la la-check-circle" style={{ color: "#039855", fontSize: 32 }}></i>);
 
     } catch(err) {
@@ -186,17 +186,17 @@ export default function (props) {
       const response = await axios.post("/api/llm-engine", {
         systemPrompt:
           "You are a helpful assistant that can answer questions and help with tasks.",
-        prompt: `Generate ${questionCount} interview questions for the following Job opening: 
+        prompt: `Generate ${questionCount} interview questions for the following Job opening:
           Job Title:
-          ${jobTitle} 
+          ${jobTitle}
           Job Description:
           ${description}
-    
+
           Interview Category:
           ${groupCategory}
           Interview Category Description:
           ${interviewQuestionCategory.description}
-    
+
           The ${questionCount} interview questions should be related to the job description and follow the scope of the interview category.
 
           ${
@@ -214,9 +214,9 @@ export default function (props) {
                   .join("\n")}`
               : ""
           }
-          
+
           return it as a json object following this format for the category {category: "${groupCategory}", questions: ["question1", "question2", "question3"]}
-          
+
           ${questionGenPrompt}
           `,
       });
@@ -251,8 +251,8 @@ export default function (props) {
       candidateActionToast(
       <span style={{ fontSize: 14, fontWeight: 700, color: "#181D27", marginLeft: 8 }}>
         Questions generated successfully
-      </span>, 
-      1500, 
+      </span>,
+      1500,
       <i className="la la-check-circle" style={{ color: "#039855", fontSize: 32 }}></i>);
     } catch (err) {
       console.log(err);
@@ -351,7 +351,7 @@ export default function (props) {
                     <i className="la la-comment-alt" style={{ color: "#FFFFFF", fontSize: 20 }}></i>
                 </div>
                 <span style={{fontSize: 16, color: "#181D27", fontWeight: 700}}>
-                  Interview Questions 
+                  Interview Questions
                 </span>
                 <div style={{ borderRadius: "50%", width: 30, height: 22, border: "1px solid #D5D9EB", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, backgroundColor: "#F8F9FC", color: "#181D27", fontWeight: 700 }}>
                   {questions.reduce((acc, group) => acc + group.questions.length, 0)}
@@ -365,6 +365,9 @@ export default function (props) {
           </div>
             <div className="layered-card-content">
               <div className="questions-set">
+                <div>
+                  {error && <span style={{ color: "#F04438", fontSize: 14 }}>Please add at least 5 interview questions.</span>}
+                </div>
           {questions.map((group, index) => (
             <div
               className="question-group"

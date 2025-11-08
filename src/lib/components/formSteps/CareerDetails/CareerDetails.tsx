@@ -204,6 +204,7 @@ function CareerDetails({
                                         placeholder="0"
                                         min={0}
                                         value={minimumSalary}
+                                        disabled={salaryNegotiable}
                                         onChange={(e) => {
                                             setMinimumSalary(e.target.value || "");
                                     }}
@@ -246,6 +247,7 @@ function CareerDetails({
                                         placeholder="0"
                                         min={0}
                                         value={maximumSalary}
+                                        disabled={salaryNegotiable}
                                         onChange={(e) => {
                                         setMaximumSalary(e.target.value || "");
                                         }}

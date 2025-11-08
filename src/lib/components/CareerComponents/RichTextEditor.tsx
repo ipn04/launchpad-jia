@@ -88,6 +88,7 @@ export default function RichTextEditor({setText, text, error}: RichTextEditorPro
           onPaste={handlePaste}
           data-placeholder="Enter description"
         ></div>
+        {error && <span style={{ color: "#F04438", fontSize: 14 }}>This field is required.</span>}
         {/* Rich Text Editor Toolbar */}
         <div style={{
           border: "1px solid #E9EAEB",

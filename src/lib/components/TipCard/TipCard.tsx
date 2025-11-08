@@ -4,10 +4,11 @@ import Image from 'next/image'
 interface TipCardProps {
     CareerDetails: any[]
     ScreeningDetails: any[]
+    interviewTips: any[]
     step: number
 }
 
-function TipCard({ CareerDetails, ScreeningDetails, step }: TipCardProps) {
+function TipCard({ CareerDetails, ScreeningDetails, interviewTips, step }: TipCardProps) {
   return (
      <div className="layered-card-outer">
         <div className="layered-card-middle">
@@ -18,18 +19,26 @@ function TipCard({ CareerDetails, ScreeningDetails, step }: TipCardProps) {
                 <span style={{fontSize: 16, color: "#181D27", fontWeight: 700}}>Tips</span>
             </div>
             <div className="layered-card-content">
-                {step === 1
-                ? CareerDetails.map((detail, index) => (
+                {step === 1 && CareerDetails.map((detail, index) => (
                     <div className="d-flex" key={index} style={{ marginBottom: 12 }}>
                         <span style={{ fontSize: 14, color: "#555B6E" }}>
                             <span style={{ fontWeight: 700 }}>{detail.header}</span> {detail.body}
                         </span>
                     </div>
-                ))
-                : ScreeningDetails.map((detail, index) => (
+                ))}
+
+                {step === 2 && ScreeningDetails.map((detail, index) => (
                     <div className="d-flex" key={index} style={{ marginBottom: 12 }}>
                         <span style={{ fontSize: 14, color: "#555B6E" }}>
                             <span style={{ fontWeight: 700 }}>{detail.header}</span> {detail.body}
+                        </span>
+                    </div>
+                ))}
+
+                {step === 3 && interviewTips.map((tip, index) => (
+                    <div className="d-flex" key={index} style={{ marginBottom: 12 }}>
+                        <span style={{ fontSize: 14, color: "#555B6E" }}>
+                            <span style={{ fontWeight: 700 }}>{tip.header}</span> {tip.body}
                         </span>
                     </div>
                 ))}
