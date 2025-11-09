@@ -1,0 +1,52 @@
+@media (max-width: 1200px) {
+    .career-components-container {
+        flex-direction: column-reverse !important;
+        .career-info {
+            width: 100% !important;
+        }
+    }
+}
+@media (max-width: 768px) {
+    .career-header {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+
+        .crumb {
+            width: 100% !important;
+        }
+        .profile-dropdown {
+            width: 100% !important
+        }
+    }
+    .progress-tracker {
+        width: 90% !important;
+    }
+        .salary-input {
+            display: block !important;
+            div {
+                width: 100% !important;
+                margin: 5px 0 !important;
+            }
+        input {
+            width: 100% !important;
+        }
+    }
+}
+
+@media (max-width: 576px) {
+    .career-parent {
+        padding: 20px !important;
+    }
+    .btn-grp {
+        width: 100% !important;
+        button {
+            width: 100% !important;
+        }
+    }
+    .add-new-career-top-container {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 15px !important;
+    }
+}
+

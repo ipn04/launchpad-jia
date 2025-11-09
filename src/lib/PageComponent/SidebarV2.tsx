@@ -22,8 +22,8 @@ export default function SidebarV2(props: any) {
       )}
       <aside className="sidebar-v2">
         {/* Header */}
-        <div className="sidebar-header">
-          <div>
+        <div className="sidebar-header" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+          <div style={{ flex: 1 }}>
             <div className="sidebar-subheader">
               <img src="/jia-dashboard-logo.png" alt="Logo" />
             </div>
@@ -142,29 +142,29 @@ export default function SidebarV2(props: any) {
                 </nav>
               </SuperAdminFeature>
             )}
+          </div>
 
-            {/* Footer */}
-            <div>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: 4,
-                  marginBottom: "20px",
-                }}
+          {/* Footer */}
+          <div style={{ marginTop: 'auto' }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 4,
+                marginBottom: "20px",
+              }}
+            >
+              <span
+                style={{ fontSize: 12, fontWeight: 500, color: "#717680" }}
               >
-                <span
-                  style={{ fontSize: 12, fontWeight: 500, color: "#717680" }}
-                >
-                  © 2025
-                </span>
-                <span
-                  style={{ fontSize: 12, fontWeight: 700, color: "#717680" }}
-                >
-                  White Cloak Technologies Inc.
-                </span>
-              </div>
+                © 2025
+              </span>
+              <span
+                style={{ fontSize: 12, fontWeight: 700, color: "#717680" }}
+              >
+                White Cloak Technologies Inc.
+              </span>
             </div>
           </div>
         </div>

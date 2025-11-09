@@ -89,7 +89,7 @@ export const interviewTips = [
   },
 ];
 
-export default function SegmentedCareerForm({ career, formType, setShowEditModal }: { career?: any, formType: string, setShowEditModal?: (show: boolean) => void }) {
+export default function SegmentedCareerForm({ career, formType, setShowEditModal, draftId }: { career?: any, formType: string, setShowEditModal?: (show: boolean) => void, draftId?: string | null }) {
     const { user, orgID } = useAppContext();
     const [jobTitle, setJobTitle] = useState(career?.jobTitle || "");
     const [description, setDescription] = useState(career?.description || "");
@@ -101,6 +101,7 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
     const [salaryNegotiable, setSalaryNegotiable] = useState(career?.salaryNegotiable || true);
     const [minimumSalary, setMinimumSalary] = useState(career?.minimumSalary || "");
     const [maximumSalary, setMaximumSalary] = useState(career?.maximumSalary || "");
+    console.log("drafid", draftId)
     const [questions, setQuestions] = useState(career?.questions || [
       {
         id: 1,
@@ -159,16 +160,32 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
     );
 
     const [currentStep, setCurrentStep] = useState<number>(1);
+    const [maxCompletedStep, setMaxCompletedStep] = useState<number>(career?.currentStep || 1);
 
     useEffect(() => {
-    if (typeof window !== "undefined") {
-        const savedDraft = sessionStorage.getItem("careerDraft");
-        if (savedDraft) {
-        const draft = JSON.parse(savedDraft);
-        setCurrentStep(draft.currentStep ?? 1);
+        if (career) {
+            setJobTitle(career.jobTitle || "");
+            setDescription(career.description || "");
+            setWorkSetup(career.workSetup || "");
+            setWorkSetupRemarks(career.workSetupRemarks || "");
+            setScreeningSetting(career.screeningSetting || "");
+            setEmploymentType(career.employmentType || "");
+            setRequireVideo(career.requireVideo ?? true);
+            setSalaryNegotiable(career.salaryNegotiable ?? true);
+            setMinimumSalary(career.minimumSalary ?? "");
+            setMaximumSalary(career.maximumSalary ?? "");
+            setQuestions(career.questions || [
+                { id: 1, category: "CV Validation / Experience", questionCountToAsk: null, questions: [] },
+                { id: 2, category: "Technical", questionCountToAsk: null, questions: [] },
+                { id: 3, category: "Behavioral", questionCountToAsk: null, questions: [] },
+                { id: 4, category: "Analytical", questionCountToAsk: null, questions: [] },
+                { id: 5, category: "Others", questionCountToAsk: null, questions: [] },
+            ]);
+            setPreScreeningQuestions(career.preScreeningQuestions || []);
+            setCurrentStep(career.currentStep ?? 1);
+            setMaxCompletedStep(career.currentStep ?? 1);
         }
-    }
-    }, []);
+    }, [career]);
 
     console.log("currentStep:", currentStep);
     const isFormValid = () => {
@@ -332,34 +349,11 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
       }
     }
 
-    useEffect(() => {
-        const savedDraft = sessionStorage.getItem("careerDraft");
-        if (savedDraft) {
-            const draft = JSON.parse(savedDraft);
-            setJobTitle(draft.jobTitle || "");
-            setDescription(draft.description || "");
-            setWorkSetup(draft.workSetup || "");
-            setWorkSetupRemarks(draft.workSetupRemarks || "");
-            setQuestions(draft.questions || []);
-            setPreScreeningQuestions(draft.preScreeningQuestions || []);
-            setScreeningSetting(draft.screeningSetting || "Good Fit and above");
-            setRequireVideo(draft.requireVideo ?? true);
-            setSalaryNegotiable(draft.salaryNegotiable ?? true);
-            setMinimumSalary(draft.minimumSalary ?? "");
-            setMaximumSalary(draft.maximumSalary ?? "");
-            setCountry(draft.country || "Philippines");
-            setProvince(draft.province || "");
-            setCity(draft.location || "");
-            setEmploymentType(draft.employmentType || "");
-        }
-    }, []);
-
     const saveDraft = async (step: number) => {
         setIsSavingCareer(true);
 
-        const nextStep = step + 1;
-
         const careerDraft = {
+            draftId,
             jobTitle,
             description,
             workSetup,
@@ -378,11 +372,15 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
             province,
             location: city,
             employmentType,
-            currentStep: nextStep,
+            currentStep: step + 1,
         };
+
         try {
-            sessionStorage.setItem("careerDraft", JSON.stringify(careerDraft));
-            setCurrentStep(step + 1);
+            const response = await axios.post("/api/save-career-draft", careerDraft);
+            if (response.status === 200) {
+                setCurrentStep(step + 1);
+                setMaxCompletedStep(Math.max(maxCompletedStep, step + 1));
+            }
         } catch (error) {
             errorToast("Failed to save draft", 1300);
         } finally {
@@ -407,12 +405,12 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
       },[career])
 
     return (
-        <div className="col">
+        <div className="career-parent col">
         {formType === "add" ? (
             <div>
-                <div style={{ marginBottom: "35px", display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+                <div className="add-new-career-top-container" style={{ marginBottom: "35px", display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
                     <h1 style={{ fontSize: "24px", fontWeight: 550, color: "#111827" }}>Add new career</h1>
-                    <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "10px" }}>
+                    <div className="btn-grp" style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "10px" }}>
                     <button
                         disabled={!isFormValid() || isSavingCareer}
                         style={{ width: "fit-content", color: "#414651", background: "#fff", border: "1px solid #D5D7DA", padding: "8px 16px", borderRadius: "60px", cursor: !isFormValid() || isSavingCareer ? "not-allowed" : "pointer", whiteSpace: "nowrap" }} onClick={() => {
@@ -455,11 +453,19 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
                             style={{ color: "#fff", fontSize: 20, marginRight: 8 }}
                         ></i>
                         {currentStep === 4 ? "Publish" : "Save & Continue"}
-                        </button>
+                    </button>
                     </div>
                 </div>
-                <div>
-                    <ProgressTracker currentStep={currentStep} />
+                <div className="progress-tracker">
+                    <ProgressTracker
+                        currentStep={currentStep}
+                        maxStep={maxCompletedStep}
+                        onStepClick={(stepId) => {
+                            if (stepId <= maxCompletedStep) {
+                                setCurrentStep(stepId);
+                            }
+                        }}
+                    />
                 </div>
             </div>
             ) : (
@@ -490,8 +496,11 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
               </div>
        </div>
         )}
-        <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", width: "100%", gap: 16, alignItems: "flex-start", marginTop: 16 }}>
         <div
+            className="career-components-container"
+            style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", width: "100%", gap: 16, alignItems: "flex-start", marginTop: 16 }}>
+        <div
+            className="career-info"
             style={{
                 width: currentStep === 4 ? "100%" : "60%",
                 display: "flex",
@@ -554,34 +563,9 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
                         screeningSettingList={screeningSettingList}
                         screeningSetting={screeningSetting}
                         setScreeningSetting={setScreeningSetting}
+                        requireVideo={requireVideo}
+                        setRequireVideo={setRequireVideo}
                     />
-                    <div className="layered-card-content">
-                        <div style={{ display: "flex", flexDirection: "row", gap: 8 }}>
-                            <i className="la la-id-badge" style={{ color: "#414651", fontSize: 20 }}></i>
-                            <span>Screening Setting</span>
-                        </div>
-                        <CustomDropdown
-                        onSelectSetting={(setting) => {
-                            setScreeningSetting(setting);
-                        }}
-                        screeningSetting={screeningSetting}
-                        settingList={screeningSettingList}
-                        />
-                        <span>This settings allows Jia to automatically endorse candidates who meet the chosen criteria.</span>
-                        <div style={{ display: "flex", flexDirection: "row",justifyContent: "space-between", gap: 8 }}>
-                            <div style={{ display: "flex", flexDirection: "row", gap: 8 }}>
-                                <i className="la la-video" style={{ color: "#414651", fontSize: 20 }}></i>
-                                <span>Require Video Interview</span>
-                            </div>
-                            <div style={{ display: "flex", flexDirection: "row", alignItems: "flex-start", gap: 8 }}>
-                                <label className="switch">
-                                    <input type="checkbox" checked={requireVideo} onChange={() => setRequireVideo(!requireVideo)} />
-                                    <span className="slider round"></span>
-                                </label>
-                                <span>{requireVideo ? "Yes" : "No"}</span>
-                            </div>
-                        </div>
-                    </div>
                     <InterviewQuestionGeneratorV2 questions={questions} setQuestions={(questions) => setQuestions(questions)} jobTitle={jobTitle} description={description} error={errors.questions} />
                 </div>
             )}
@@ -653,7 +637,7 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
                                         Minimum Salary
                                     </span>
                                     <span style={{fontWeight: 500, fontSize: 14, paddingBottom: 4}}>
-                                        {minimumSalary}
+                                        {salaryNegotiable ? "Negotiable" : minimumSalary || "0"}
                                     </span>
                                 </div>
                                 <div className="d-flex flex-column col-sm px-0">
@@ -661,7 +645,7 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
                                         Maximum Salary
                                     </span>
                                     <span style={{fontWeight: 500, fontSize: 14, paddingBottom: 4}}>
-                                        {maximumSalary}
+                                        {salaryNegotiable ? "Negotiable" : maximumSalary || "0"}
                                     </span>
                                 </div>
                                 <div className="d-flex flex-column col-sm px-0"/>
@@ -818,7 +802,10 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
           {/* <InterviewQuestionGeneratorV2 questions={questions} setQuestions={(questions) => setQuestions(questions)} jobTitle={jobTitle} description={description} /> */}
         </div>
         {currentStep <= 3 && (
-            <div style={{ width: "40%", display: "flex", flexDirection: "column", gap: 8 }}>
+            <div
+                className="career-info"
+                style={{ width: "40%", display: "flex", flexDirection: "column", gap: 8 }}
+            >
                 <TipCard
                     CareerDetails={jobTitleTips}
                     ScreeningDetails={screeningTips}

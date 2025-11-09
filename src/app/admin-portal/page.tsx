@@ -5,7 +5,7 @@ import HeaderBar from "@/lib/PageComponent/HeaderBar";
 import AdminDashboard from "@/lib/components/AdminComponents/AdminDashboard";
 
 export default function () {
-  
+
   return (
     <>
       <HeaderBar activeLink="Dashboard" currentPage="Overview" icon="la la-chart-area" />

@@ -17,7 +17,6 @@ function PreScreening({
     setPreScreeningQuestions,
 }: PreScreeningProps) {
   const [showSuggestions, setShowSuggestions] = useState(true);
-
   const suggestedQuestions = [
     {
       id: 'notice-period',
@@ -39,7 +38,7 @@ function PreScreening({
       question: 'How much is your expected monthly salary?',
       type: 'range',
       min: 40000,
-      max: 165000,
+      max: 60000,
       currency: '₱'
     }
   ];
@@ -230,7 +229,10 @@ function PreScreening({
                                                         fontSize: 14,
                                                         border: 'none',
                                                         padding: '4px 8px',
-                                                        color: 'none'
+                                                        color: 'none',
+                                                        outline: 'none',
+                                                        backgroundColor: 'transparent',
+                                                        cursor: 'pointer'
                                                     }}
                                                 >
                                                     {questionTypes.map(type => (
@@ -254,7 +256,8 @@ function PreScreening({
                                                                     fontSize: 14,
                                                                     padding: '4px 8px',
                                                                     border: 'none',
-                                                                    outline: 'none'
+                                                                    outline: 'none',
+                                                                    fontWeight: 500
                                                                 }}
                                                                 onMouseOut={(e) => {
                                                                     if (document.activeElement !== e.currentTarget) {
@@ -297,7 +300,8 @@ function PreScreening({
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         gap: 4,
-                                                        padding: '4px 0',
+                                                        padding: '8px',
+                                                        fontWeight: 700
                                                     }}
                                                     onMouseOver={(e) => e.currentTarget.style.color = '#111827'}
                                                     onMouseOut={(e) => e.currentTarget.style.color = '#4B5563'}
@@ -309,7 +313,7 @@ function PreScreening({
                                         )}
 
                                         {q.type === 'range' && (
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px' }}>
+                                            <div className='salary-input' style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px' }}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #D1D5DB', padding: '4px 8px', borderRadius: 8 }}>
                                                     <span style={{ fontSize: 14, color: '#4B5563' }}>{q.currency}</span>
                                                     <input
@@ -360,7 +364,8 @@ function PreScreening({
                                             border: '1px solid #B32318',
                                             gap: 4,
                                             padding: '8px 16px',
-                                            borderRadius: 18
+                                            borderRadius: 18,
+                                            fontWeight: 700
                                         }}
                                         onMouseOver={(e) => e.currentTarget.style.color = '#DC2626'}
                                         onMouseOut={(e) => e.currentTarget.style.color = '#EF4444'}
@@ -386,46 +391,47 @@ function PreScreening({
 
                                 return (
                                     <div
-                                    key={suggested.id}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        padding: 12,
-                                        borderRadius: '8px',
-                                        cursor: 'pointer'
-                                    }}
-                                    >
-                                    <div>
-                                        <h4 style={{ fontSize: 14, fontWeight: 500, margin: 0 }}>
-                                        {suggested.title}
-                                        </h4>
-                                        <p style={{ fontSize: 12, color: '#6B7280', margin: 0 }}>
-                                        {suggested.question}
-                                        </p>
-                                    </div>
-                                    <button
-                                        onClick={() => !isAdded && addSuggestedQuestion(suggested)}
+                                        key={suggested.id}
                                         style={{
-                                        padding: '4px 10px',
-                                        fontSize: 14,
-                                        border: '1px solid #D1D5DB',
-                                        borderRadius: '26px',
-                                        backgroundColor: isAdded ? '#E5E7EB' : 'white',
-                                        cursor: isAdded ? 'not-allowed' : 'pointer',
-                                        color: isAdded ? '#6B7280' : 'black',
-                                        fontWeight: 500
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            padding: "12px 0",
+                                            opacity: isAdded ? 0.3 : 1,
+                                            borderRadius: '8px',
+                                            cursor: 'pointer'
                                         }}
-                                        disabled={isAdded}
-                                        onMouseOver={(e) => {
-                                        if (!isAdded) e.currentTarget.style.backgroundColor = '#F3F4F6';
-                                        }}
-                                        onMouseOut={(e) => {
-                                        if (!isAdded) e.currentTarget.style.backgroundColor = 'white';
-                                        }}
-                                    >
-                                        {isAdded ? 'Added' : 'Add'}
-                                    </button>
+                                        >
+                                        <div>
+                                            <h4 style={{ fontSize: 14, fontWeight: 700, margin: 0 }}>
+                                            {suggested.title}
+                                            </h4>
+                                            <p style={{ fontSize: 14, fontWeight: 500, color: '#6B7280', margin: 0 }}>
+                                            {suggested.question}
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => !isAdded && addSuggestedQuestion(suggested)}
+                                            style={{
+                                            padding: '4px 10px',
+                                            fontSize: 14,
+                                            border: '1px solid #D1D5DB',
+                                            borderRadius: '26px',
+                                            backgroundColor: isAdded ? '#ffffffff' : 'white',
+                                            cursor: isAdded ? 'not-allowed' : 'pointer',
+                                            color: isAdded ? '#6B7280' : 'black',
+                                            fontWeight: 500
+                                            }}
+                                            disabled={isAdded}
+                                            onMouseOver={(e) => {
+                                            if (!isAdded) e.currentTarget.style.backgroundColor = '#F3F4F6';
+                                            }}
+                                            onMouseOut={(e) => {
+                                            if (!isAdded) e.currentTarget.style.backgroundColor = 'white';
+                                            }}
+                                        >
+                                            {isAdded ? 'Added' : 'Add'}
+                                        </button>
                                     </div>
                                 );
                                 })}

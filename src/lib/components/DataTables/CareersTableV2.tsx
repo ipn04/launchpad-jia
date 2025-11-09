@@ -11,6 +11,7 @@ import { deleteCareer, candidateActionToast, errorToast } from "@/lib/Utils";
 import CustomDropdown from "../Dropdown/CustomDropdown";
 import { useLocalStorage } from "../../hooks/useLocalStorage";
 import { Tooltip } from "react-tooltip";
+import { useRouter } from "next/navigation";
 
 const tableHeaderStyle: any = {
   fontSize: "12px",
@@ -35,6 +36,8 @@ export default function CareersV2Table() {
   const [filterStatus, setFilterStatus] = useState("All Statuses");
   const filterStatusOptions = ["All Statuses", "Published", "Unpublished"];
   const [sortBy, setSortBy] = useState("Recent Activity");
+  const router = useRouter();
+
   const sortByOptions = {
     // Default sort
     "Recent Activity": {
@@ -131,9 +134,29 @@ export default function CareersV2Table() {
             status: filterStatus,
           },
         });
-        setCareers(response.data.careers);
-        setTotalPages(response.data.totalPages);
-        setTotalCareers(response.data.totalCareers);
+
+        const draftRes = await axios.get("/api/get-career-drafts", {
+          params: {
+            userEmail: user?.email,
+            orgID,
+          },
+        });
+
+        const draftsWithActivity = draftRes.data.drafts.map((draft: any) => ({
+          ...draft,
+          lastActivityAt: draft.updatedAt || draft.createdAt,
+        }));
+
+        console.log("Draft Res:", draftsWithActivity);
+        const allCareers = [...draftsWithActivity, ...response.data.careers];
+
+         setTotalCareers(allCareers.length);
+        setTotalPages(Math.ceil(allCareers.length / limit));
+
+        const startIndex = (currentPage - 1) * limit;
+        const endIndex = startIndex + limit;
+        setCareers(allCareers.slice(startIndex, endIndex));
+
         setTotalActiveCareers(response.data.totalActiveCareers);
       } catch (error) {
         console.error("Error fetching careers:", error);
@@ -292,7 +315,16 @@ export default function CareersV2Table() {
                         onClick={(e) => {
                           if (e.defaultPrevented) return;
                           e.preventDefault();
-                          window.location.href = `/recruiter-dashboard/careers/manage/${item._id}`;
+                          const status = item.status || "Draft";
+                          if (status === "Draft") {
+                            router.push(
+                              `/recruiter-dashboard/careers/new-career?draftId=${item._id}&orgID=${item.orgID}`
+                            );
+                          } else {
+                            router.push(
+                              `/recruiter-dashboard/careers/manage/${item._id}`
+                            );
+                          }
                         }}
                       >
                         <th scope="row" style={{ maxWidth: "300px", whiteSpace: "initial" }}>
@@ -305,7 +337,7 @@ export default function CareersV2Table() {
                           </div>
                         </th>
                         <td>
-                        <CareerStatus status={item.status} />
+                        <CareerStatus status={item.status || "Draft"} />
                         </td>
                         <td>
                           <div className="d-flex justify-content-center align-items-center">
@@ -332,7 +364,13 @@ export default function CareersV2Table() {
                         </td>
 
                         <td>{moment(item.createdAt).format("MMM DD, YYYY")}</td>
-                        <td>{item.lastActivityAt ? moment(item.lastActivityAt).format("MMM DD, YYYY") : "N/A"}</td>
+                        <td>
+                          {item.lastActivityAt
+                            ? moment(item.lastActivityAt).format("MMM DD, YYYY")
+                            : item.updatedAt
+                              ? moment(item.updatedAt).format("MMM DD, YYYY")
+                              : "N/A"}
+                        </td>
                         <td>
                         <div className="dropdown">
                         <button style={{ background: "none", border: "none", cursor: "pointer" }} onClick={(e) => {

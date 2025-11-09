@@ -71,7 +71,7 @@ export default function DirectInterviewLinkV2(props: { formData: any, setFormDat
 
   useEffect(() => {
       if (formData?.directInterviewLink) {
-        let dynamicLink = `${window.location.origin.includes("hirejia.ai") ? 
+        let dynamicLink = `${window.location.origin.includes("hirejia.ai") ?
           "https://www.hellojia.ai" : window.location.origin}${formData.directInterviewLink}`;
 
         setLink(dynamicLink);
@@ -83,10 +83,7 @@ export default function DirectInterviewLinkV2(props: { formData: any, setFormDat
       {formData && (
           <div className="layered-card-outer">
             <div className="layered-card-middle">
-            <div style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", width: "100%", gap: 8 }}>
-                <div style={{ width: 32, height: 32, display: "flex", justifyContent: "center", alignItems: "center", gap: 8, background: "#181D27", borderRadius: "60px" }}>
-                <i className="la la-link" style={{ fontSize: 20, color: "#FFFFFF"}} /> 
-                </div>
+            <div className="px-2" style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", width: "100%", gap: 8 }}>
                 <span style={{ fontSize: 16, color: "#181D27", fontWeight: 700 }}>Direct Interview Link</span>
             </div>
 
@@ -121,7 +118,7 @@ export default function DirectInterviewLinkV2(props: { formData: any, setFormDat
                     </span>
 
                     <div className="btn-set careers-btn-set" style={{ flexDirection: "row", gap: 10 }}>
-                      <a href={shareLink} target="_blank">
+                      <a className="w-50" href={shareLink} target="_blank">
                         <div style={{ color: "#414651", display: "flex", alignItems: "center", gap: 8, background: "#fff", border: "1px solid #D5D7DA", padding: "8px 16px", borderRadius: "60px", cursor: "pointer", whiteSpace: "nowrap", fontWeight: 700, fontSize: 14 }}>
                             <i className="la la-link"></i> Open link
                         </div>
@@ -129,6 +126,7 @@ export default function DirectInterviewLinkV2(props: { formData: any, setFormDat
                       <button
                         style={{ color: "#B32318", display: "flex", alignItems: "center", gap: 8, background: "#FEF3F2", border: "1px solid #FEF3F2", padding: "8px 16px", borderRadius: "60px", cursor: "pointer", whiteSpace: "nowrap", fontWeight: 700, fontSize: 14 }}
                         onClick={disableLink}
+                        className="w-50"
                       >
                         <i className="la la-square text-danger"></i> Disable
                         Link

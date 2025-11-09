@@ -11,7 +11,7 @@ interface AccordionProps {
 const Accordion: React.FC<AccordionProps> = ({
   title,
   children,
-  defaultOpen = false,
+  defaultOpen = true,
   onEdit,
   showEditIcon = true
 }) => {
@@ -65,13 +65,13 @@ const Accordion: React.FC<AccordionProps> = ({
               background: 'white',
               border: '1px solid #E5E7EB',
               cursor: 'pointer',
-              padding: '8px',
+              padding: '0px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              borderRadius: '6px',
-              width: '36px',
-              height: '36px'
+              borderRadius: '14px',
+              width: '28px',
+              height: '28px'
             }}
             onMouseOver={(e) => {
               e.currentTarget.style.backgroundColor = '#F9FAFB';

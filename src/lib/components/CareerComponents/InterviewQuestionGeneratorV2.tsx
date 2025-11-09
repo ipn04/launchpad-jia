@@ -9,6 +9,7 @@ import {
 } from "@/lib/Utils";
 import InterviewQuestionModal from "./InterviewQuestionModal";
 import FullScreenLoadingAnimation from "./FullScreenLoadingAnimation";
+import Image from "next/image";
 
 export default function (props) {
   const { questions, setQuestions, jobTitle, description, error } = props;
@@ -347,11 +348,8 @@ export default function (props) {
         <div className="layered-card-middle">
           <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
               <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 8 }}>
-                <div style={{ width: 32, height: 32, backgroundColor: "#181D27", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <i className="la la-comment-alt" style={{ color: "#FFFFFF", fontSize: 20 }}></i>
-                </div>
-                <span style={{fontSize: 16, color: "#181D27", fontWeight: 700}}>
-                  Interview Questions
+                <span className="pl-3" style={{fontSize: 16, color: "#181D27", fontWeight: 700}}>
+                  AI Interview Questions
                 </span>
                 <div style={{ borderRadius: "50%", width: 30, height: 22, border: "1px solid #D5D9EB", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, backgroundColor: "#F8F9FC", color: "#181D27", fontWeight: 700 }}>
                   {questions.reduce((acc, group) => acc + group.questions.length, 0)}
@@ -365,8 +363,15 @@ export default function (props) {
           </div>
             <div className="layered-card-content">
               <div className="questions-set">
-                <div>
-                  {error && <span style={{ color: "#F04438", fontSize: 14 }}>Please add at least 5 interview questions.</span>}
+                <div className="d-flex align-items-center">
+                  {error &&
+                    <>
+                      <Image src="/warning.png" alt="Tips" width={18} height={18} />
+                      <span style={{ color: "#F04438", fontSize: 14, paddingLeft: 8 }}>
+                        Please add at least 5 interview questions.
+                      </span>
+                    </>
+                    }
                 </div>
           {questions.map((group, index) => (
             <div

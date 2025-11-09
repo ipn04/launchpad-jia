@@ -200,7 +200,7 @@ function CareerDetails({
                                     <input
                                         type="number"
                                         className={`form-control mt-2 ${errors.minimumSalary ? "border border-danger" : ""}`}
-                                        style={{ paddingLeft: "28px" }}
+                                        style={{ paddingLeft: "28px", backgroundColor: salaryNegotiable ? "#FAFAFA" : "#FFFFFF" }}
                                         placeholder="0"
                                         min={0}
                                         value={minimumSalary}
@@ -243,7 +243,7 @@ function CareerDetails({
                                     <input
                                         type="number"
                                         className={`form-control mt-2 ${errors.maximumSalary || errors.salaryRange ? "border border-danger" : ""}`}
-                                        style={{ paddingLeft: "28px" }}
+                                        style={{ paddingLeft: "28px", backgroundColor: salaryNegotiable ? "#FAFAFA" : "#FFFFFF" }}
                                         placeholder="0"
                                         min={0}
                                         value={maximumSalary}

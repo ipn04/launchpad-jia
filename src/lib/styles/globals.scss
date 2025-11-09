@@ -219,7 +219,7 @@ td {
   }
 
   &:focus {
-    border: 2px solid #5e39d6 !important;
+    // border: 2px solid #5e39d6 !important;
     box-shadow: none !important;
   }
 }
@@ -270,6 +270,7 @@ textarea {
   .question-group {
     min-height: 50px;
     padding: 10px;
+    padding-bottom: 30px;
     // background: #f8f9fa;
     background: transparent;
     margin-bottom: 16px;
