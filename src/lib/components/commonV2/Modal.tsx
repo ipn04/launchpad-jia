@@ -13,6 +13,7 @@ import { getStage } from "@/lib/Utils";
 
 export default function ({ modalType, setModalType }) {
   const [applicationData, setApplicationData] = useState(null);
+  console.log("applicationData in Modal:", applicationData);
   const [inputValue, setInputValue] = useState("");
   const [radioValue, setRadioValue] = useState(null);
   const [reportSuccess, setReportSuccess] = useState(false);
@@ -553,12 +554,18 @@ export default function ({ modalType, setModalType }) {
                 </span>
               )}
 
-              {applicationData.workSetup && (
-                <div className={styles.tagContainer}>
-                  <span>{applicationData.workSetup}</span>
-                </div>
-              )}
-
+              <div className={styles.employmentTypeContainer}>
+                {applicationData.workSetup && (
+                  <div className={styles.tagContainer}>
+                    <span>{applicationData.workSetup}</span>
+                  </div>
+                )}
+                {applicationData.employmentType && (
+                  <div className={styles.tagContainer}>
+                    <span>{applicationData.employmentType}</span>
+                  </div>
+                )}
+              </div>
               <hr />
 
               <p

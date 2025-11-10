@@ -77,6 +77,7 @@ export async function signInWithGoogle(type) {
 
       if (
         (host.includes("localhost") || host.includes("hirejia.ai")) &&
+        type !== "job-portal" &&
         res.data.role == "applicant"
       ) {
         Swal.fire({

@@ -10,13 +10,14 @@ import { checkFile } from "@/lib/utils/helpersV2";
 import { CORE_API_URL } from "@/lib/Utils";
 import axios from "axios";
 import Markdown from "react-markdown";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 export default function () {
   const fileInputRef = useRef(null);
   const { user, setModalType } = useAppContext();
   const [buildingCV, setBuildingCV] = useState(false);
   const [currentStep, setCurrentStep] = useState(null);
+  console.log("currentStep", currentStep);
   const [digitalCV, setDigitalCV] = useState(null);
   const [editingCV, setEditingCV] = useState(null);
   const [file, setFile] = useState(null);
@@ -25,6 +26,9 @@ export default function () {
   const [interview, setInterview] = useState(null);
   const [screeningResult, setScreeningResult] = useState(null);
   const [userCV, setUserCV] = useState(null);
+  const [applicationData, setApplicationData] = useState(null);
+  const [answers, setAnswers] = useState({});
+  console.log("answers:", answers);
   const cvSections = [
     "Introduction",
     "Current Position",
@@ -36,7 +40,7 @@ export default function () {
     "Certifications",
     "Awards",
   ];
-  const step = ["Submit CV", "CV Screening", "Review Next Steps"];
+  const step = ["Submit CV", "Pre-screening Questions", "Review"];
   const stepStatus = ["Completed", "Pending", "In Progress"];
 
   function handleDragOver(e) {
@@ -61,6 +65,15 @@ export default function () {
       }, 100);
     }
   }
+
+  useEffect(() => {
+   const storedSelectedCareer = sessionStorage.getItem("selectedCareer");
+
+      if (storedSelectedCareer) {
+        const parseStoredSelectedCareer = JSON.parse(storedSelectedCareer);
+        setApplicationData(parseStoredSelectedCareer);
+      }
+  }, []);
 
   function handleFile(files) {
     const file = checkFile(files);
@@ -129,7 +142,7 @@ export default function () {
 
   function processState(index, isAdvance = false) {
     const currentStepIndex = step.indexOf(currentStep);
-
+    console.log("currentStepIndex", currentStepIndex);
     if (currentStepIndex == index) {
       if (index == stepStatus.length - 1) {
         return stepStatus[0];
@@ -196,6 +209,68 @@ export default function () {
       });
   }
 
+  function handleContinue() {
+    const currentIndex = step.indexOf(currentStep);
+
+    if (currentStep === "Pre-screening Questions") {
+      let validationError = "";
+
+      const unansweredOrInvalid = applicationData.preScreeningQuestions.some((q, index) => {
+        if (q.type === "range") {
+          const min = parseFloat(answers[`min-${index}`]);
+          const max = parseFloat(answers[`max-${index}`]);
+
+          if (!min || !max) {
+            validationError = "Please fill in both minimum and maximum salary.";
+            return true;
+          }
+
+          if (min > max) {
+            validationError = "Minimum salary cannot be higher than maximum salary.";
+            return true;
+          }
+
+          return false;
+        }
+
+        if (!answers[index]) {
+          validationError = "Please answer all pre-screening questions before continuing.";
+          return true;
+        }
+
+        return false;
+      });
+
+      if (unansweredOrInvalid) {
+        alert(validationError);
+        return;
+      }
+      setCurrentStep(step[2]);
+      handleCVScreen();
+      return;
+    }
+
+    if (currentIndex < step.length - 1) {
+      setCurrentStep(step[currentIndex + 1]);
+    }
+  }
+
+  const allQuestionsAnswered = useMemo(() => {
+    if (currentStep !== "Pre-screening Questions") return true;
+    if (!applicationData?.preScreeningQuestions) return false;
+
+    return applicationData.preScreeningQuestions.every((q, index) => {
+      if (q.type === "range") {
+        const min = parseFloat(answers[`min-${index}`]);
+        const max = parseFloat(answers[`max-${index}`]);
+        return min && max && min <= max;
+      }
+
+      return !!answers[index];
+    });
+  }, [answers, applicationData, currentStep]);
+
+
   function handleCVScreen() {
     if (editingCV != null) {
       alert("Please save the changes first.");
@@ -228,7 +303,7 @@ export default function () {
       }
     }
 
-    setCurrentStep(step[1]);
+    setCurrentStep(step[2]);
 
     if (hasChanges) {
       const formattedUserCV = cvSections.map((section) => ({
@@ -288,7 +363,7 @@ export default function () {
           alert(result.message);
           setCurrentStep(step[0]);
         } else {
-          setCurrentStep(step[2]);
+          setCurrentStep(step[3]);
           setScreeningResult(result);
         }
       })
@@ -602,13 +677,130 @@ export default function () {
                       </div>
                     </div>
                   ))}
-                  <button onClick={handleCVScreen}>Submit CV</button>
+                  <button
+                  onClick={handleContinue}>Continue</button>
                 </div>
               )}
             </>
           )}
 
           {currentStep == step[1] && (
+          <>
+            <div className={styles.preQuestionContainer}>
+              <span className={styles.preQuestionTitle}>
+                Quick Pre-screening
+              </span>
+              <span className={styles.preQuestionDescription}>
+                Just a few short questions to help your recruiters assess you faster. Takes less than a minute.
+              </span>
+            </div>
+            <div className={styles.cvDetailsContainer}>
+              {applicationData?.preScreeningQuestions?.length > 0 ? (
+                <div className={styles.preScreeningForm}>
+                  {applicationData.preScreeningQuestions.map((q, index) => (
+                      <div className={styles.gradient}>
+                        <div className={styles.cvDetailsCard}>
+                          <label className={styles.questionLabel}>
+                            {q.question}
+                          </label>
+                          <div className={styles.cvDetailsContainer}>
+                            <div key={index} className={styles.questionCard}>
+
+                              {q.type === "dropdown" && q.options?.length > 0 && (
+                                <select
+                                  className={styles.dropdownInput}
+                                  value={answers[index] || ""}
+                                  onChange={(e) =>
+                                    setAnswers((prev) => ({ ...prev, [index]: e.target.value }))
+                                  }
+                                >
+                                  <option value="">Select an option</option>
+                                  {q.options.map((option, idx) => (
+                                    <option key={idx} value={option}>
+                                      {option}
+                                    </option>
+                                  ))}
+                                </select>
+                              )}
+
+                              {q.type === "range" && (
+                                <div className={styles.rangeContainer}>
+                                  <div className={styles.rangeInputWrapper}>
+                                    <div className={styles.rangeInputGroup}>
+                                      <label className={styles.rangeLabel}>Minimum Salary</label>
+                                      <div className={styles.salaryInputWrapper}>
+                                        <span className={styles.currencySymbol}>₱</span>
+                                        <input
+                                          type="number"
+                                          placeholder="40,000"
+                                          min={0}
+                                          className={styles.salaryInput}
+                                          value={answers[`min-${index}`] || ""}
+                                          onChange={(e) =>
+                                            setAnswers((prev) => ({
+                                              ...prev,
+                                              [`min-${index}`]: e.target.value,
+                                            }))
+                                          }
+                                        />
+                                      </div>
+                                    </div>
+
+                                    <div className={styles.rangeInputGroup}>
+                                      <label className={styles.rangeLabel}>Maximum Salary</label>
+                                      <div className={styles.salaryInputWrapper}>
+                                        <span className={styles.currencySymbol}>₱</span>
+                                        <input
+                                          type="number"
+                                          placeholder="55,000"
+                                          min={0}
+                                          className={styles.salaryInput}
+                                          value={answers[`max-${index}`] || ""}
+                                          onChange={(e) =>
+                                            setAnswers((prev) => ({
+                                              ...prev,
+                                              [`max-${index}`]: e.target.value,
+                                            }))
+                                          }
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {!["dropdown", "range"].includes(q.type) && (
+                                <input
+                                  type="text"
+                                  placeholder="Your answer"
+                                  className={styles.textInput}
+                                  value={answers[index] || ""}
+                                  onChange={(e) =>
+                                    setAnswers((prev) => ({ ...prev, [index]: e.target.value }))
+                                  }
+                                />
+                              )}
+                            </div>
+                          </div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+              ) : (
+                <span>No pre-screening questions provided.</span>
+              )}
+              <button
+                onClick={handleContinue}
+                disabled={!allQuestionsAnswered}
+                className={`${styles.continueButton} ${!allQuestionsAnswered ? styles.disabled : ""}`}
+              >
+                Continue
+              </button>
+            </div>
+          </>
+        )}
+
+          {currentStep == step[2] && (
             <div className={styles.cvScreeningContainer}>
               <img alt="" src={assetConstants.loading} />
               <span className={styles.title}>Sit tight!</span>
@@ -621,7 +813,7 @@ export default function () {
             </div>
           )}
 
-          {currentStep == step[2] && screeningResult && (
+          {currentStep == step[3] && screeningResult && (
             <div className={styles.cvResultContainer}>
               {screeningResult.applicationStatus == "Dropped" ? (
                 <>

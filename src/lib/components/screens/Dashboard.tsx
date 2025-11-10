@@ -10,6 +10,7 @@ import { processDisplayDate } from "@/lib/utils/helpersV2";
 import axios from "axios";
 import Fuse from "fuse.js";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 export default function () {
   const [activeInterviewIndex, setActiveInterviewIndex] = useState(null);
@@ -23,6 +24,8 @@ export default function () {
   const [search, setSearch] = useState("");
   const [viewDropdown, setViewDropdown] = useState(null);
   const { user, setModalType } = useAppContext();
+  const [showTooltip, setShowTooltip] = useState(false);
+
   const applicationPhase = [
     "For CV Screening",
     "For AI Interview",
@@ -849,7 +852,79 @@ export default function () {
                               </ul>
                             </div>
                           </div>
-                          <div className={styles.rightContainer}></div>
+                          <div className={styles.rightContainer}>
+                            <div
+                              className={styles.rightApplication}
+                            >
+                              <div className={styles.titleIconContainer}>
+                                <div className={styles.iconWrapper}>
+                                  <Image
+                                    src="/icons/calendarv2.svg"
+                                    alt=""
+                                    width={10}
+                                    height={10}
+                                  />
+                                </div>
+                                <span className={styles.title}>
+                                  Date of last application
+                                </span>
+                              </div>
+                             <div className={styles.dateTooltipContainer}>
+                              <span className={styles.subtitle}>
+                                {[interviewStatus[1], interviewStatus[3]].includes(
+                                  interview.applicationStatus
+                                )
+                                  ? processDisplayDate(
+                                      interview.completedAt || interview.updatedAt
+                                    )
+                                  : processDisplayDate(interview.updatedAt)}
+                              </span>
+                              <div
+                                className={styles.tooltipIcon}
+                                onMouseEnter={() => setShowTooltip(true)}
+                                onMouseLeave={() => setShowTooltip(false)}
+                              >
+                                <Image
+                                  src="/tooltip.png"
+                                  alt=""
+                                  width={10}
+                                  height={10}
+                                />
+                                {showTooltip && (
+                                  <div className={styles.tooltipMessage}>
+                                    This is the date when the hiring team made a decision about your application, not the date you submitted it.
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            </div>
+                            <div
+                              className={styles.rightApplication}
+                            >
+                              <div className={styles.titleIconContainer}>
+                                <div className={styles.iconWrapper}>
+                                  <Image
+                                    src="/alarm.png"
+                                    alt=""
+                                    width={10}
+                                    height={10}
+                                  />
+                                </div>
+                                <span className={styles.title}>
+                                  You may reapply after:
+                                </span>
+                              </div>
+                              <span className={styles.subtitle}>
+                                {[interviewStatus[1], interviewStatus[3]].includes(
+                                  interview.applicationStatus
+                                )
+                                  ? processDisplayDate(
+                                      interview.completedAt || interview.updatedAt
+                                    )
+                                  : processDisplayDate(interview.updatedAt)}
+                              </span>
+                            </div>
+                          </div>
                         </div>
                         <button onClick={() => handleArchive(interview)}>
                           <img alt="" src={assetConstants.archiveV2} />

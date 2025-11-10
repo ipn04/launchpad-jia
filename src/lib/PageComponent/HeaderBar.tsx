@@ -76,12 +76,14 @@ export default function HeaderBar(props: { activeLink: string, currentPage: stri
 
               <div className="profile-dropdown">
                   <div style={{ display: "flex", alignItems: "center", gap: 10, flexDirection: "row", justifyContent: "flex-end", width: "100%" }}>
+                    <div className="infoContainer">
                         <span style={{ fontSize: 14, fontWeight: 500, color: "#414651" }}>
                           {date?.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })}
                         </span>
                         <span style={{ fontSize: 14, fontWeight: 500, color: "#717680" }}>
                           {date?.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
                         </span>
+                      </div>
                     {user &&
                     <div
                     style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}

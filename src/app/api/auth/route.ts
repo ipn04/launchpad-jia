@@ -5,7 +5,6 @@ export async function POST(request: Request) {
   try {
     const { name, email, image } = await request.json();
 
-    // Validate required fields
     if (!name || !email) {
       return NextResponse.json(
         { error: "Name and email are required" },
@@ -14,45 +13,55 @@ export async function POST(request: Request) {
     }
 
     const { db } = await connectMongoDB();
-    const admin = await db.collection("admins").findOne({ email: email });
 
+    const admin = await db.collection("admins").findOne({ email });
     if (admin) {
       await db.collection("admins").updateOne(
-        { email: email },
-        {
-          $set: {
-            name: name,
-            image: image,
-            lastSeen: new Date(),
-          },
-        }
+        { email },
+        { $set: { name, image, lastSeen: new Date() } }
       );
-
-      return NextResponse.json(admin);
-    } else {
-      const applicant = await db
-        .collection("applicants")
-        .findOne({ email: email });
-
-      if (applicant) {
-        return NextResponse.json(applicant);
-      }
-
-      if (!applicant) {
-        await db.collection("applicants").insertOne({
-          email: email,
-          name: name,
-          image: image,
-          createdAt: new Date(),
-          lastSeen: new Date(),
-          role: "applicant",
-        });
-      }
+      return NextResponse.json({ name, email, image, role: "admin" });
     }
 
-    return NextResponse.json({
-      message: "Default Fallback",
+    const orgMember = await db.collection("members").findOne({ email });
+    if (orgMember) {
+      await db.collection("orgMembers").updateOne(
+        { email },
+        { $set: { lastLogin: new Date() } }
+      );
+      return NextResponse.json({
+        name,
+        email,
+        image,
+        role: orgMember.role,
+        orgID: orgMember.orgID,
+      });
+    }
+
+    let applicant = await db.collection("applicants").findOne({ email });
+    if (applicant) {
+      await db.collection("applicants").updateOne(
+        { email },
+        { $set: { lastSeen: new Date() } }
+      );
+      return NextResponse.json({
+        name: applicant.name,
+        email: applicant.email,
+        image: applicant.image,
+        role: "applicant",
+      });
+    }
+
+    await db.collection("applicants").insertOne({
+      name,
+      email,
+      image,
+      createdAt: new Date(),
+      lastSeen: new Date(),
+      role: "applicant",
     });
+
+    return NextResponse.json({ name, email, image, role: "applicant" });
   } catch (error) {
     console.error("Authentication error:", error);
     return NextResponse.json(

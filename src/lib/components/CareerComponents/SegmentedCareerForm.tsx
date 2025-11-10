@@ -93,6 +93,7 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
     const { user, orgID } = useAppContext();
     const [jobTitle, setJobTitle] = useState(career?.jobTitle || "");
     const [description, setDescription] = useState(career?.description || "");
+    console.log("draftId:", draftId);
     const [workSetup, setWorkSetup] = useState(career?.workSetup || "");
     const [workSetupRemarks, setWorkSetupRemarks] = useState(career?.workSetupRemarks || "");
     const [screeningSetting, setScreeningSetting] = useState(career?.screeningSetting || "Good Fit and above");
@@ -101,7 +102,7 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
     const [salaryNegotiable, setSalaryNegotiable] = useState(career?.salaryNegotiable || true);
     const [minimumSalary, setMinimumSalary] = useState(career?.minimumSalary || "");
     const [maximumSalary, setMaximumSalary] = useState(career?.maximumSalary || "");
-    console.log("drafid", draftId)
+    const [isEditing, setIsEditing] = useState(false);
     const [questions, setQuestions] = useState(career?.questions || [
       {
         id: 1,
@@ -168,7 +169,7 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
             setDescription(career.description || "");
             setWorkSetup(career.workSetup || "");
             setWorkSetupRemarks(career.workSetupRemarks || "");
-            setScreeningSetting(career.screeningSetting || "");
+            setScreeningSetting(career.screeningSetting || "Good Fit and above");
             setEmploymentType(career.employmentType || "");
             setRequireVideo(career.requireVideo ?? true);
             setSalaryNegotiable(career.salaryNegotiable ?? true);
@@ -187,7 +188,6 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
         }
     }, [career]);
 
-    console.log("currentStep:", currentStep);
     const isFormValid = () => {
         // return jobTitle?.trim().length > 0 && description?.trim().length > 0 && questions.some((q) => q.questions.length > 0) && workSetup?.trim().length > 0;
         return jobTitle?.trim().length > 0 && description?.trim().length > 0 && workSetup?.trim().length > 0;
@@ -325,10 +325,13 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
             status,
             employmentType,
         }
-        console.log("Saving career:", career);
+
         try {
 
-            const response = await axios.post("/api/add-career", career);
+            const response = await axios.post("/api/add-career", {
+                ...career,
+                draftId: draftId || null,
+            });
             if (response.status === 200) {
             candidateActionToast(
                 <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 8, marginLeft: 8 }}>
@@ -427,15 +430,15 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
                         Save & Continue
                     </button> */}
                     <button
-                        disabled={isSavingCareer}
+                        disabled={isSavingCareer || (currentStep < 4 && currentStep < maxCompletedStep)}
                         style={{
                             width: "fit-content",
-                            background: isSavingCareer ? "#D5D7DA" : "black",
+                            background: isSavingCareer || (currentStep < 4 && currentStep < maxCompletedStep) ? "#D5D7DA" : "black",
                             color: "#fff",
                             border: "1px solid #E9EAEB",
                             padding: "8px 16px",
                             borderRadius: "60px",
-                            cursor: "pointer",
+                            cursor: isSavingCareer || (currentStep < 4 && currentStep < maxCompletedStep) ? "not-allowed" : "pointer",
                             whiteSpace: "nowrap",
                         }}
                         onClick={async () => {
@@ -572,65 +575,117 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
 
             {currentStep === 4 && (
                 <>
-                <Accordion
+                 <Accordion
                     title="Career Details & Team Access"
-                    onEdit={() => alert('Edit Career Details')}
-                >
+                    onEdit={() => setIsEditing((prev) => !prev)}
+                    >
                     <div style={{ display: "flex", flexDirection: "column", gap: 8, backgroundColor: "#FFFFFF", padding: 16, borderRadius: 20 }}>
                         <div className="p-2">
-                            <div className="d-flex flex-column pb-3"  style={{borderBottom: "1px solid #E9EAEB"}}>
-                                <span style={{fontWeight: 700, fontSize: 14, paddingBottom: 4}}>
-                                    Job Title
-                                </span>
-                                <span style={{fontWeight: 500, fontSize: 14, paddingBottom: 4}}>
-                                    {jobTitle}
-                                </span>
+                            <div className="d-flex flex-column pb-3" style={{ borderBottom: "1px solid #E9EAEB" }}>
+                                <span style={{ fontWeight: 700, fontSize: 14, paddingBottom: 4 }}>Job Title</span>
+                                <input
+                                    type="text"
+                                    value={jobTitle}
+                                    onChange={(e) => setJobTitle(e.target.value)}
+                                    readOnly={!isEditing}
+                                    className="form-control"
+                                    style={{
+                                        background: 'none',
+                                        border: `${isEditing ? '1px solid #D5D7DA' : 'none'}`,
+                                        paddingLeft: `${isEditing ? '12px' : 0}`,
+                                        paddingRight: 0,
+                                    }}
+                                />
                             </div>
-                            <div className="row mr-0 ml-0 py-3"  style={{borderBottom: "1px solid #E9EAEB"}}>
+
+                            <div className="row mr-0 ml-0 py-3" style={{ borderBottom: "1px solid #E9EAEB", gap: 16 }}>
                                 <div className="d-flex flex-column col-sm px-0">
-                                    <span style={{fontWeight: 700, fontSize: 14, paddingBottom: 4}}>
-                                        Employment Type
-                                    </span>
-                                    <span style={{fontWeight: 500, fontSize: 14, paddingBottom: 4}}>
-                                        {employmentType}
-                                    </span>
+                                <span style={{ fontWeight: 700, fontSize: 14, paddingBottom: 4 }}>Employment Type</span>
+                                <input
+                                    type="text"
+                                    value={employmentType}
+                                    onChange={(e) => setEmploymentType(e.target.value)}
+                                    readOnly={!isEditing}
+                                    className="form-control"
+                                    style={{
+                                        background: 'none',
+                                        border: `${isEditing ? '1px solid #D5D7DA' : 'none'}`,
+                                        paddingLeft: `${isEditing ? '12px' : 0}`,
+                                        paddingRight: 0,
+                                    }}
+                                />
                                 </div>
                                 <div className="d-flex flex-column col-sm px-0">
-                                    <span style={{fontWeight: 700, fontSize: 14, paddingBottom: 4}}>
-                                        Work Arrangement
-                                    </span>
-                                    <span style={{fontWeight: 500, fontSize: 14, paddingBottom: 4}}>
-                                        {workSetup}
-                                    </span>
+                                <span style={{ fontWeight: 700, fontSize: 14, paddingBottom: 4 }}>Work Arrangement</span>
+                                <input
+                                    type="text"
+                                    value={workSetup}
+                                    onChange={(e) => setWorkSetup(e.target.value)}
+                                    readOnly={!isEditing}
+                                    className="form-control"
+                                    style={{
+                                        background: 'none',
+                                        border: `${isEditing ? '1px solid #D5D7DA' : 'none'}`,
+                                        paddingLeft: `${isEditing ? '12px' : 0}`,
+                                        paddingRight: 0,
+                                    }}
+                                />
                                 </div>
-                                <div className="d-flex flex-column col-sm px-0"/>
+                                <div className="d-flex flex-column col-sm px-0" />
                             </div>
-                            <div className="row mr-0 ml-0 py-3"  style={{borderBottom: "1px solid #E9EAEB"}}>
+
+                            <div className="row mr-0 ml-0 py-3" style={{ borderBottom: "1px solid #E9EAEB", gap: 16 }}>
                                 <div className="d-flex flex-column col-sm px-0">
-                                    <span style={{fontWeight: 700, fontSize: 14, paddingBottom: 4}}>
-                                        Country
-                                    </span>
-                                    <span style={{fontWeight: 500, fontSize: 14, paddingBottom: 4}}>
-                                        {country}
-                                    </span>
+                                <span style={{ fontWeight: 700, fontSize: 14, paddingBottom: 4 }}>Country</span>
+                                <input
+                                    type="text"
+                                    value={country}
+                                    onChange={(e) => setCountry(e.target.value)}
+                                    readOnly={!isEditing}
+                                    className="form-control"
+                                    style={{
+                                        background: 'none',
+                                        border: `${isEditing ? '1px solid #D5D7DA' : 'none'}`,
+                                        paddingLeft: `${isEditing ? '12px' : 0}`,
+                                        paddingRight: 0,
+                                    }}
+                                />
                                 </div>
                                 <div className="d-flex flex-column col-sm px-0">
-                                    <span style={{fontWeight: 700, fontSize: 14, paddingBottom: 4}}>
-                                        Province
-                                    </span>
-                                    <span style={{fontWeight: 500, fontSize: 14, paddingBottom: 4}}>
-                                        {province}
-                                    </span>
+                                <span style={{ fontWeight: 700, fontSize: 14, paddingBottom: 4 }}>Province</span>
+                                <input
+                                    type="text"
+                                    value={province}
+                                    onChange={(e) => setProvince(e.target.value)}
+                                    readOnly={!isEditing}
+                                    className="form-control"
+                                    style={{
+                                        background: 'none',
+                                        border: `${isEditing ? '1px solid #D5D7DA' : 'none'}`,
+                                        paddingLeft: `${isEditing ? '12px' : 0}`,
+                                        paddingRight: 0,
+                                    }}
+                                />
                                 </div>
                                 <div className="d-flex flex-column col-sm px-0">
-                                    <span style={{fontWeight: 700, fontSize: 14, paddingBottom: 4}}>
-                                        City
-                                    </span>
-                                    <span style={{fontWeight: 500, fontSize: 14, paddingBottom: 4}}>
-                                        {city}
-                                    </span>
+                                <span style={{ fontWeight: 700, fontSize: 14, paddingBottom: 4 }}>City</span>
+                                <input
+                                    type="text"
+                                    value={city}
+                                    onChange={(e) => setCity(e.target.value)}
+                                    readOnly={!isEditing}
+                                    className="form-control"
+                                    style={{
+                                        background: 'none',
+                                        border: `${isEditing ? '1px solid #D5D7DA' : 'none'}`,
+                                        paddingLeft: `${isEditing ? '12px' : 0}`,
+                                        paddingRight: 0,
+                                    }}
+                                />
                                 </div>
                             </div>
+
+
                             <div className="row mr-0 ml-0 py-3"  style={{borderBottom: "1px solid #E9EAEB"}}>
                                 <div className="d-flex flex-column col-sm px-0">
                                     <span style={{fontWeight: 700, fontSize: 14, paddingBottom: 4}}>
@@ -651,13 +706,22 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
                                 <div className="d-flex flex-column col-sm px-0"/>
                             </div>
                         </div>
+
                         <div className="px-2">
-                            <span style={{fontWeight: 700, fontSize: 14, paddingBottom: 4}}>
-                                Job Description
-                            </span>
-                            <p className="my-2" style={{fontWeight: 700, fontSize: 14}}>
-                                {description}
-                            </p>
+                            <span style={{ fontWeight: 700, fontSize: 14, paddingBottom: 4 }}>Job Description</span>
+                            <textarea
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                                readOnly={!isEditing}
+                                className="form-control"
+                                rows={4}
+                                style={{
+                                    background: 'none',
+                                    border: `${isEditing ? '1px solid #D5D7DA' : 'none'}`,
+                                    paddingLeft: `${isEditing ? '12px' : 0}`,
+                                    paddingRight: 0,
+                                }}
+                            />
                         </div>
                     </div>
                 </Accordion>

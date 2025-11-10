@@ -548,6 +548,7 @@ export default function (props) {
                 ))}
                 {/* Buttons to add or generate questions */}
                 <div
+                  className="interview-btn-group"
                   style={{
                     display: "flex",
                     justifyContent: "space-between",

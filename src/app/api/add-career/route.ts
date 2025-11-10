@@ -25,6 +25,7 @@ export async function POST(request: Request) {
       province,
       employmentType,
       preScreeningQuestions,
+      draftId
     } = await request.json();
 
     if (!jobTitle || !description || !questions || !location || !workSetup) {
@@ -72,6 +73,10 @@ export async function POST(request: Request) {
     };
 
     await db.collection("careers").insertOne(career);
+
+    if (draftId) {
+      await db.collection("careerDrafts").deleteOne({ _id: new ObjectId(draftId) });
+    }
 
     return NextResponse.json({
       message: "Career added successfully",
