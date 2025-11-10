@@ -23,7 +23,10 @@ export default async function connectMongoDB() {
     return { client: cachedClient, db: cachedDb };
   }
 
-  const client = await MongoClient.connect(uri, {});
+  const client = await MongoClient.connect(uri, {
+    tls: true,
+    serverSelectionTimeoutMS: 5000,
+  });
 
   const db = client.db(dbName);
 
