@@ -82,10 +82,25 @@ function PreScreening({
   };
 
   const updateQuestion = (id: number, field: string, value: any) => {
-    setPreScreeningQuestions(preScreeningQuestions.map(q =>
-      q.id === id ? { ...q, [field]: value } : q
-    ));
-  };
+    setPreScreeningQuestions(preScreeningQuestions.map(q => {
+        if (q.id === id) {
+        let updated = { ...q, [field]: value };
+
+        if (q.type === 'range') {
+            if (field === 'min' && value > q.max) {
+            updated.min = q.max;
+            }
+            if (field === 'max' && value < q.min) {
+            updated.max = q.min;
+            }
+        }
+
+        return updated;
+        }
+        return q;
+    }));
+    };
+
 
   const addOption = (id: number) => {
     setPreScreeningQuestions(preScreeningQuestions.map(q => {

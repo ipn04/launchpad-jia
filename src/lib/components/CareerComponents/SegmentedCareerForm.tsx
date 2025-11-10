@@ -103,6 +103,7 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
     const [minimumSalary, setMinimumSalary] = useState(career?.minimumSalary || "");
     const [maximumSalary, setMaximumSalary] = useState(career?.maximumSalary || "");
     const [isEditing, setIsEditing] = useState(false);
+    const [draftIdState, setDraftIdState] = useState(draftId || null);
     const [questions, setQuestions] = useState(career?.questions || [
       {
         id: 1,
@@ -289,6 +290,12 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
             .some(([_, value]) => value === true);
     };
 
+    useEffect(() => {
+        if (draftId && !draftIdState) {
+            setDraftIdState(draftId);
+        }
+    }, [draftId]);
+
     const saveCareer = async (status: string) => {
         setShowSaveModal("");
         if (!status) {
@@ -330,7 +337,7 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
 
             const response = await axios.post("/api/add-career", {
                 ...career,
-                draftId: draftId || null,
+                draftId: draftIdState,
             });
             if (response.status === 200) {
             candidateActionToast(
@@ -356,7 +363,7 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
         setIsSavingCareer(true);
 
         const careerDraft = {
-            draftId,
+            draftId: draftIdState,
             jobTitle,
             description,
             workSetup,
@@ -381,6 +388,9 @@ export default function SegmentedCareerForm({ career, formType, setShowEditModal
         try {
             const response = await axios.post("/api/save-career-draft", careerDraft);
             if (response.status === 200) {
+                if (!draftIdState && response.data.draftId) {
+                    setDraftIdState(response.data.draftId);
+                }
                 setCurrentStep(step + 1);
                 setMaxCompletedStep(Math.max(maxCompletedStep, step + 1));
             }

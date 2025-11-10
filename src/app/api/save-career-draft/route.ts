@@ -15,16 +15,20 @@ export async function POST(request: Request) {
         { _id: new ObjectId(draftId) },
         { $set: rest }
       );
+      return NextResponse.json({ message: "Draft updated successfully", draftId });
     } else {
-      await db.collection("careerDrafts").insertOne({
+      const result = await db.collection("careerDrafts").insertOne({
         ...draft,
         createdAt: new Date(),
       });
+      return NextResponse.json({
+        message: "Draft created successfully",
+        draftId: result.insertedId.toString(),
+      });
     }
-
-    return NextResponse.json({ message: "Draft saved successfully" });
   } catch (error) {
     console.error("Error saving draft:", error);
     return NextResponse.json({ error: "Failed to save draft" }, { status: 500 });
   }
 }
+
